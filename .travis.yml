@@ -1,0 +1,14 @@
+language: python
+
+python:
+  - 3.3
+  - 3.4
+  - 3.5
+  - pypy
+
+install:
+  - pip install -q pytest-flask
+  - pip install -q -e .
+
+script:
+  - py.test tests
