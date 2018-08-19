@@ -5,6 +5,8 @@ from flask_executor import Executor
 import pytest
 
 
+EXECUTOR_MAX_WORKERS = 10
+
 def fib(n):
     if n <= 2:
         return 1
@@ -55,21 +57,19 @@ def test_submit_result():
         assert future.result() == fib(5)
 
 def test_thread_workers():
-    MAX_WORKERS = 10
     app = Flask(__name__)
     app.config['EXECUTOR_TYPE'] = 'thread'
-    app.config['EXECUTOR_MAX_WORKERS'] = MAX_WORKERS
+    app.config['EXECUTOR_MAX_WORKERS'] = EXECUTOR_MAX_WORKERS
     executor = Executor(app)
     with app.app_context():
         executor.submit(fib, 5)
-        assert executor._executor._max_workers == MAX_WORKERS
+        assert executor._executor._max_workers == EXECUTOR_MAX_WORKERS
 
 def test_process_workers():
-    MAX_WORKERS = 10
     app = Flask(__name__)
     app.config['EXECUTOR_TYPE'] = 'process'
-    app.config['EXECUTOR_MAX_WORKERS'] = MAX_WORKERS
+    app.config['EXECUTOR_MAX_WORKERS'] = EXECUTOR_MAX_WORKERS
     executor = Executor(app)
     with app.app_context():
         executor.submit(fib, 5)
-        assert executor._executor._max_workers == MAX_WORKERS
+        assert executor._executor._max_workers == EXECUTOR_MAX_WORKERS
