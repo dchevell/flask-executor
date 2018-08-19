@@ -3,7 +3,7 @@ import concurrent.futures
 from flask import current_app
 
 __all__ = ('Executor', )
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 
 class Executor:
@@ -17,6 +17,7 @@ class Executor:
     def init_app(self, app):
         app.config.setdefault('EXECUTOR_TYPE', 'thread')
         app.config.setdefault('EXECUTOR_MAX_WORKERS', None)
+        app.extensions['executor'] = self
 
     def _make_executor(self):
         executor_type = current_app.config['EXECUTOR_TYPE']
