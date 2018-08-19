@@ -44,7 +44,7 @@ app.config['EXECUTOR_TYPE']
 Specify which kind of executor to initialise. Valid values are `'thread'` (default) to initialise a `concurrent.futures.ThreadPoolExecutor`, or `'process'` to initialise a `concurrent.futures.ProcessPoolExecutor`.
 
 ```python
-app.config['EXECUTOR_MAX_WORKERS'] = 5
+app.config['EXECUTOR_MAX_WORKERS']
 ```
 Define the number of worker threads for a `ThreadPoolExecutor` or the number of worker processes for a `ProcessPoolExecutor`. Valid values are any integer or `None` (default) to let the `concurrent.futures` module pick defaults for you.
 
