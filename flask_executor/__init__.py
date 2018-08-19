@@ -3,7 +3,7 @@ import concurrent.futures
 from flask import current_app
 
 __all__ = ('Executor', )
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 
 
 class Executor:
