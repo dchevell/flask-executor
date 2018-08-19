@@ -11,7 +11,7 @@ setuptools.setup(
     version=version,
     author='Dave Chevell',
     author_email='chevell@gmail.com',
-    description='A simple Flask wrapper for concurrent.futures',
+    description='An easy to use Flask wrapper for concurrent.futures',
     long_description=long_description,
     long_description_content_type="text/markdown",
     url='https://github.com/dchevell/flask-executor',
