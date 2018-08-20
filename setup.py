@@ -1,10 +1,18 @@
 import setuptools
+from setuptools.command.test import test
+import sys
 
 from flask_executor import __version__ as version
 
 with open("README.md", "r") as fh:
     long_description=fh.read()
 
+class pytest(test):
+
+    def run_tests(self):
+        import pytest
+        errno = pytest.main(self.test_args)
+        sys.exit(errno)
 
 setuptools.setup(
     name='Flask-Executor',
@@ -24,5 +32,10 @@ setuptools.setup(
     ],
     license='MIT',
     install_requires=['Flask'],
+    tests_require=['pytest-flask', 'pytest'],
+    test_suite='tests',
+    cmdclass={
+        'test': pytest
+    },
     python_requires='>=3.3.0'
 )
