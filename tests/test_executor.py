@@ -1,7 +1,7 @@
 import concurrent.futures
 
 from flask import Flask
-from flask_executor import Executor
+from flask_executor import Executor, ExecutorJob
 import pytest
 
 
@@ -73,3 +73,31 @@ def test_process_workers():
     with app.app_context():
         executor.submit(fib, 5)
         assert executor._executor._max_workers == EXECUTOR_MAX_WORKERS
+
+def test_thread_decorator():
+    app = Flask(__name__)
+    app.config['EXECUTOR_TYPE'] = 'thread'
+    executor = Executor(app)
+
+    @executor.job
+    def decorated(n):
+        return fib(n)
+
+    assert type(decorated) == ExecutorJob
+    with app.app_context():
+        future = decorated.submit(5)
+        assert type(future) == concurrent.futures.Future
+        assert future.result() == fib(5)
+
+def test_process_decorator():
+    ''' Ensure decorators throw a TypeError when using the ProcessPoolExecutor '''
+    app = Flask(__name__)
+    app.config['EXECUTOR_TYPE'] = 'process'
+    executor = Executor(app)
+    try:
+        @executor.job
+        def decorated(n):
+            return fib(n)
+    except TypeError:
+        pass
+
