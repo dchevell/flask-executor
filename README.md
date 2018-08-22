@@ -46,7 +46,8 @@ Specify which kind of executor to initialise. Valid values are `'thread'` (defau
 ```python
 app.config['EXECUTOR_MAX_WORKERS']
 ```
-Define the number of worker threads for a `ThreadPoolExecutor` or the number of worker processes for a `ProcessPoolExecutor`. Valid values are any integer or `None` (default) to let the `concurrent.futures` module pick defaults for you.
+Define the number of worker threads for a `ThreadPoolExecutor` or the number of worker processes for a `ProcessPoolExecutor`. Valid values are any integer or `None` (default) to let the `concurrent.futures`
+module pick defaults for you.
 
 
 Usage
@@ -84,11 +85,27 @@ def example2():
     future = executor.submit(fib, 5)
     return str(future.result())
 
-@app.route('/job3')
-def job3():
+@app.route('/example3')
+def example3():
     futures = [executor.submit(fib, i) for i in range(1, 40)]
     def generate():
         for future in concurrent.futures.as_completed(futures):
             yield str(future.result()) + '\n'
     return Response(generate(), mimetype='text/text')
+```
+
+If you're using a `ThreadPoolExecutor`, you can use a decorator pattern in the style of Celery or Dramatiq to decorate functions which can then be submitted to the executor directly:
+
+```python
+@executor.job
+def fib(n):
+    if n <= 2:
+        return 1
+    else:
+        return fib(n-1) + fib(n-2)
+
+@app.route('/example4')
+def example4():
+    fib.submit(5)
+    return 'OK'
 ```
