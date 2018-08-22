@@ -109,3 +109,5 @@ def example4():
     fib.submit(5)
     return 'OK'
 ```
+
+Note: decoration is not currently supported when using a `ProcessPoolExecutor`, due to the multiprocessing library's inability to work with decorated functions.
