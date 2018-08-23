@@ -1,5 +1,7 @@
 import concurrent.futures
 
+from flask import current_app
+
 
 __all__ = ('Executor', )
 __version__ = '0.2.0'
@@ -30,8 +32,10 @@ class Executor:
             raise ValueError("{} is not a valid executor type.".format(executor_type))
         return _executor(max_workers=executor_max_workers)
 
-    def submit(self, *args, **kwargs):
-        return self._executor.submit(*args, **kwargs)
+    def submit(self, fn, *args, **kwargs):
+        if type(self._executor) == concurrent.futures.ThreadPoolExecutor:
+            fn = with_app_context(fn, current_app._get_current_object())
+        return self._executor.submit(fn, *args, **kwargs)
 
     def job(self, fn):
         if type(self._executor) == concurrent.futures.ProcessPoolExecutor:
@@ -49,3 +53,10 @@ class ExecutorJob:
     def submit(self, *args, **kwargs):
         future = self.executor.submit(self.fn, *args, **kwargs)
         return future
+
+
+def with_app_context(fn, app):
+    def wrapper(*args, **kwargs):
+        with app.app_context():
+            return fn(*args, **kwargs)
+    return wrapper
