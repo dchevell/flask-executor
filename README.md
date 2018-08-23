@@ -74,6 +74,8 @@ def example1():
     return 'OK'
 ```
 
+Jobs submitted to the executor are wrapped with the current app and executed inside the app context so that tasks requiring an app context can run outside your main thread or process without requiring you to modify the function to handle this yourself.
+
 Submitting examples to the executor returns standard `concurrent.futures.Future` objects that you can work with:
 
 ```python
@@ -110,4 +112,7 @@ def example4():
     return 'OK'
 ```
 
+`ThreadPoolExecutor` jobs are also wrapped with a copy of the current app object and executed inside its app context, so that tasks requiring an app context can run outside your main thread.
+
 Note: decoration is not currently supported when using a `ProcessPoolExecutor`, due to the multiprocessing library's inability to work with decorated functions.
+
