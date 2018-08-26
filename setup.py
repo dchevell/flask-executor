@@ -4,8 +4,10 @@ import sys
 
 from flask_executor import __version__ as version
 
+
 with open("README.md", "r") as fh:
     long_description=fh.read()
+
 
 class pytest(test):
 
@@ -13,6 +15,7 @@ class pytest(test):
         import pytest
         errno = pytest.main(self.test_args)
         sys.exit(errno)
+
 
 setuptools.setup(
     name='Flask-Executor',
@@ -32,10 +35,12 @@ setuptools.setup(
     ],
     license='MIT',
     install_requires=['Flask'],
+    extras_require={
+        ':python_version == "2.7"': ['futures']
+    },
     tests_require=['pytest-flask', 'pytest'],
     test_suite='tests',
     cmdclass={
         'test': pytest
-    },
-    python_requires='>=3.3.0'
+    }
 )
