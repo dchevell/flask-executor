@@ -1,10 +1,42 @@
 import concurrent.futures
+import os
+import sys
 
 from flask import current_app
 
 
 __all__ = ('Executor', )
 __version__ = '0.3.0'
+
+
+workers_multiplier = {
+        'thread': 1,
+        'process': 5
+}
+
+
+def default_workers(executor_type):
+    if sys.version_info.major == 3 and sys.version_info.minor in (3, 4):
+        return (os.cpu_count() or 1) * workers_multiplier[executor_type]
+    return None
+
+
+def with_app_context(fn, app):
+    def wrapper(*args, **kwargs):
+        with app.app_context():
+            return fn(*args, **kwargs)
+    return wrapper
+
+
+class ExecutorJob:
+
+    def __init__(self, executor, fn):
+        self.executor = executor
+        self.fn = fn
+
+    def submit(self, *args, **kwargs):
+        future = self.executor.submit(self.fn, *args, **kwargs)
+        return future
 
 
 class Executor:
@@ -17,7 +49,9 @@ class Executor:
 
     def init_app(self, app):
         app.config.setdefault('EXECUTOR_TYPE', 'thread')
-        app.config.setdefault('EXECUTOR_MAX_WORKERS', None)
+        executor_type = app.config['EXECUTOR_TYPE']
+        executor_max_workers = default_workers(executor_type)
+        app.config.setdefault('EXECUTOR_MAX_WORKERS', executor_max_workers)
         self._executor = self._make_executor(app)
         app.extensions['executor'] = self
 
@@ -44,19 +78,4 @@ class Executor:
         return ExecutorJob(executor=self, fn=fn)
 
 
-class ExecutorJob:
 
-    def __init__(self, executor, fn):
-        self.executor = executor
-        self.fn = fn
-
-    def submit(self, *args, **kwargs):
-        future = self.executor.submit(self.fn, *args, **kwargs)
-        return future
-
-
-def with_app_context(fn, app):
-    def wrapper(*args, **kwargs):
-        with app.app_context():
-            return fn(*args, **kwargs)
-    return wrapper
