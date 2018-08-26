@@ -2,7 +2,13 @@ import setuptools
 from setuptools.command.test import test
 import sys
 
-from flask_executor import __version__ as version
+try:
+    from flask_executor import __version__ as version
+except ImportError:
+    import re
+    pattern = re.compile(r"__version__ = '(.*)'")
+    with open('flask_executor/__init__.py') as f:
+        version = pattern.search(f.read()).group(1)
 
 
 with open("README.md", "r") as fh:
