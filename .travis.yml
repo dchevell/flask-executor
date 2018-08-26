@@ -10,7 +10,7 @@ python:
 
 install:
   - pip install -q pytest-flask
-  - pip install -q -e .
+  - pip install -e .
 
 script:
   - py.test tests
