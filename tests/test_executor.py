@@ -27,27 +27,27 @@ def test_default_executor(app):
     executor = Executor(app)
     with app.app_context():
         executor.submit(fib, 5)
-        assert type(executor._executor) == concurrent.futures.ThreadPoolExecutor
+        assert isinstance(executor._executor, concurrent.futures.ThreadPoolExecutor)
 
 def test_thread_executor(app):
     app.config['EXECUTOR_TYPE'] = 'thread'
     executor = Executor(app)
     with app.app_context():
         executor.submit(fib, 5)
-        assert type(executor._executor) == concurrent.futures.ThreadPoolExecutor
+        assert isinstance(executor._executor, concurrent.futures.ThreadPoolExecutor)
 
 def test_process_executor(app):
     app.config['EXECUTOR_TYPE'] = 'process'
     executor = Executor(app)
     with app.app_context():
         executor.submit(fib, 5)
-        assert type(executor._executor) == concurrent.futures.ProcessPoolExecutor
+        assert isinstance(executor._executor, concurrent.futures.ProcessPoolExecutor)
 
 def test_submit_result(app):
     executor = Executor(app)
     with app.app_context():
         future = executor.submit(fib, 5)
-        assert type(future) == concurrent.futures.Future
+        assert isinstance(future, concurrent.futures.Future)
         assert future.result() == fib(5)
 
 def test_thread_workers(app):
@@ -72,10 +72,10 @@ def test_thread_decorator(app):
     @executor.job
     def decorated(n):
         return fib(n)
-    assert type(decorated) == ExecutorJob
+    assert isinstance(decorated, ExecutorJob)
     with app.app_context():
         future = decorated.submit(5)
-        assert type(future) == concurrent.futures.Future
+        assert isinstance(future, concurrent.futures.Future)
         assert future.result() == fib(5)
 
 def test_process_decorator(app):
