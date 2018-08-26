@@ -5,7 +5,7 @@ from flask import current_app
 
 
 __all__ = ('Executor', )
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 
 
 workers_multiplier = {
