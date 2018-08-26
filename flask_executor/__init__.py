@@ -1,5 +1,4 @@
 import concurrent.futures
-import os
 import sys
 
 from flask import current_app
@@ -17,7 +16,12 @@ workers_multiplier = {
 
 def default_workers(executor_type):
     if sys.version_info.major == 3 and sys.version_info.minor in (3, 4):
-        return (os.cpu_count() or 1) * workers_multiplier[executor_type]
+        try:
+            from multiprocessing import cpu_count
+        except ImportError:
+            def cpu_count():
+                return None
+        return (cpu_count() or 1) * workers_multiplier[executor_type]
     return None
 
 
