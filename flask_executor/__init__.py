@@ -71,12 +71,12 @@ class Executor:
         return _executor(max_workers=executor_max_workers)
 
     def submit(self, fn, *args, **kwargs):
-        if type(self._executor) == concurrent.futures.ThreadPoolExecutor:
+        if isinstance(self._executor, concurrent.futures.ThreadPoolExecutor):
             fn = with_app_context(fn, current_app._get_current_object())
         return self._executor.submit(fn, *args, **kwargs)
 
     def job(self, fn):
-        if type(self._executor) == concurrent.futures.ProcessPoolExecutor:
+        if isinstance(self._executor, concurrent.futures.ProcessPoolExecutor):
             raise TypeError("Can't decorate {}: Executors that use multiprocessing"
                             " don't support decorators".format(fn))
         return ExecutorJob(executor=self, fn=fn)
