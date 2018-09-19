@@ -1,7 +1,7 @@
 import concurrent.futures
 import sys
 
-from flask import copy_current_request_context
+from flask import copy_current_request_context, current_app
 
 
 __all__ = ('Executor', )
