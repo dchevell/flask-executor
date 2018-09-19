@@ -2,12 +2,15 @@ import concurrent.futures
 import random
 
 from flask import Flask, current_app, request
-from flask_executor import Executor, ExecutorJob
 import pytest
+
+from flask_executor import Executor, ExecutorJob
 
 
 EXECUTOR_MAX_WORKERS = 10
 
+
+# Reusable functions for tests
 def fib(n):
     if n <= 2:
         return 1
@@ -19,6 +22,9 @@ def app_context_test_value():
 
 def request_context_test_value():
     return request.test_value
+
+
+# Begin tests
 
 def test_init(app):
     executor = Executor(app)
@@ -98,7 +104,7 @@ def test_process_decorator(app):
         assert 0
 
 def test_app_context_thread(app):
-    test_value = random.randint(1,101)
+    test_value = random.randint(1, 101)
     app.config['EXECUTOR_TYPE'] = 'thread'
     app.config['TEST_VALUE'] = test_value
     executor = Executor(app)
@@ -106,7 +112,7 @@ def test_app_context_thread(app):
     assert future.result() == test_value
 
 def test_request_context_thread(app):
-    test_value = random.randint(1,101)
+    test_value = random.randint(1, 101)
     app.config['EXECUTOR_TYPE'] = 'thread'
     executor = Executor(app)
     with app.test_request_context(''):
@@ -115,7 +121,7 @@ def test_request_context_thread(app):
     assert future.result() == test_value
 
 def test_app_context_process(app):
-    test_value = random.randint(1,101)
+    test_value = random.randint(1, 101)
     app.config['EXECUTOR_TYPE'] = 'process'
     app.config['TEST_VALUE'] = test_value
     executor = Executor(app)
@@ -123,7 +129,7 @@ def test_app_context_process(app):
     assert future.result() == test_value
 
 def test_request_context_process(app):
-    test_value = random.randint(1,101)
+    test_value = random.randint(1, 101)
     app.config['EXECUTOR_TYPE'] = 'process'
     executor = Executor(app)
     with app.test_request_context(''):

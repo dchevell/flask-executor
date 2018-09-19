@@ -9,6 +9,7 @@ python:
   - 3.7-dev
 
 install:
+  - pip install "pytest>=3.6"
   - pip install -q pytest-flask
   - pip install -e .
 
