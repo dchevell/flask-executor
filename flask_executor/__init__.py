@@ -1,7 +1,7 @@
 import concurrent.futures
 import sys
 
-from flask import current_app
+from flask import copy_current_request_context
 
 
 __all__ = ('Executor', )
@@ -23,13 +23,6 @@ def default_workers(executor_type):
                 return None
         return (cpu_count() or 1) * workers_multiplier[executor_type]
     return None
-
-
-def with_app_context(fn, app):
-    def wrapper(*args, **kwargs):
-        with app.app_context():
-            return fn(*args, **kwargs)
-    return wrapper
 
 
 class ExecutorJob:
@@ -72,7 +65,7 @@ class Executor:
 
     def submit(self, fn, *args, **kwargs):
         if isinstance(self._executor, concurrent.futures.ThreadPoolExecutor):
-            fn = with_app_context(fn, current_app._get_current_object())
+            fn = copy_current_request_context(fn)
         return self._executor.submit(fn, *args, **kwargs)
 
     def job(self, fn):
