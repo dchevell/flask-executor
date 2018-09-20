@@ -44,6 +44,10 @@ class ExecutorJob:
         future = self.executor.submit(self.fn, *args, **kwargs)
         return future
 
+    def map(self, *iterables, **kwargs):
+        results = self.executor.map(self.fn, *iterables, **kwargs)
+        return results
+
 
 class Executor:
 
@@ -81,6 +85,10 @@ class Executor:
     def submit(self, fn, *args, **kwargs):
         fn = self._prepare_fn(fn)
         return self._executor.submit(fn, *args, **kwargs)
+
+    def map(self, fn, *iterables, **kwargs):
+        fn = self._prepare_fn(fn)
+        return self._executor.map(fn, *iterables, **kwargs)
 
     def job(self, fn):
         if isinstance(self._executor, concurrent.futures.ProcessPoolExecutor):
