@@ -2,6 +2,7 @@ import concurrent.futures
 import sys
 
 from flask import copy_current_request_context, current_app
+from flask.globals import _app_ctx_stack
 
 
 __all__ = ('Executor', )
@@ -12,6 +13,14 @@ workers_multiplier = {
         'thread': 1,
         'process': 5
 }
+
+
+def copy_current_app_context(fn):
+    app_context = _app_ctx_stack.top
+    def wrapper(*args, **kwargs):
+        with app_context:
+            return fn(*args, **kwargs)
+    return wrapper
 
 
 def default_workers(executor_type):
@@ -63,9 +72,14 @@ class Executor:
             raise ValueError("{} is not a valid executor type.".format(executor_type))
         return _executor(max_workers=executor_max_workers)
 
-    def submit(self, fn, *args, **kwargs):
+    def _prepare_fn(self, fn):
         if isinstance(self._executor, concurrent.futures.ThreadPoolExecutor):
             fn = copy_current_request_context(fn)
+            fn = copy_current_app_context(fn)
+        return fn
+
+    def submit(self, fn, *args, **kwargs):
+        fn = self._prepare_fn(fn)
         return self._executor.submit(fn, *args, **kwargs)
 
     def job(self, fn):
