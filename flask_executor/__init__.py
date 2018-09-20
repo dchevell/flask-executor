@@ -6,7 +6,7 @@ from flask.globals import _app_ctx_stack
 
 
 __all__ = ('Executor', )
-__version__ = '0.4.0'
+__version__ = '0.5.0'
 
 
 workers_multiplier = {
