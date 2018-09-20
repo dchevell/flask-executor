@@ -18,13 +18,13 @@ def fib(n):
     else:
         return fib(n-1) + fib(n-2)
 
-def app_context_test_value():
+def app_context_test_value(_=None):
     return current_app.config['TEST_VALUE']
 
-def request_context_test_value():
+def request_context_test_value(_=None):
     return request.test_value
 
-def g_context_test_value():
+def g_context_test_value(_=None):
     return g.test_value
 
 
@@ -158,3 +158,58 @@ def test_g_context_process(app):
         g.test_value = test_value
         future = executor.submit(g_context_test_value)
     assert future.result() == test_value
+
+def test_map_thread(app):
+    iterable = list(range(1, 6))
+    app.config['EXECUTOR_TYPE'] = 'thread'
+    executor = Executor(app)
+    results = executor.map(fib, iterable)
+    for i, r in zip(iterable, results):
+        assert fib(i) == r
+
+def test_map_process(app):
+    iterable = list(range(1, 6))
+    app.config['EXECUTOR_TYPE'] = 'process'
+    executor = Executor(app)
+    results = executor.map(fib, iterable)
+    for i, r in zip(iterable, results):
+        assert fib(i) == r
+
+def test_map_app_context(app):
+    test_value = random.randint(1, 101)
+    iterator = list(range(5))
+    app.config['TEST_VALUE'] = test_value
+    executor = Executor(app)
+    results = executor.map(app_context_test_value, iterator)
+    for r in results:
+        assert r == test_value
+
+def test_map_request_context(app):
+    test_value = random.randint(1, 101)
+    iterator = list(range(5))
+    executor = Executor(app)
+    with app.test_request_context('/'):
+        request.test_value = test_value
+        results = executor.map(request_context_test_value, iterator)
+    for r in results:
+        assert r == test_value
+
+def test_map_g_context(app):
+    test_value = random.randint(1, 101)
+    iterator = list(range(5))
+    executor = Executor(app)
+    with app.test_request_context(''):
+        g.test_value = test_value
+        results = executor.map(g_context_test_value, iterator)
+    for r in results:
+        assert r == test_value
+
+def test_map_decorator(app):
+    iterable = list(range(5))
+    executor = Executor(app)
+    @executor.job
+    def decorated(n):
+        return fib(n)
+    results = decorated.map(iterable)
+    for i, r in zip(iterable, results):
+        assert fib(i) == r
