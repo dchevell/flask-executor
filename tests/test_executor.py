@@ -1,11 +1,16 @@
 import concurrent.futures
+import random
 
-from flask import Flask
-from flask_executor import Executor, ExecutorJob
+from flask import Flask, current_app, g, request
 import pytest
+
+from flask_executor import Executor, ExecutorJob
 
 
 EXECUTOR_MAX_WORKERS = 10
+
+
+# Reusable functions for tests
 
 def fib(n):
     if n <= 2:
@@ -13,6 +18,17 @@ def fib(n):
     else:
         return fib(n-1) + fib(n-2)
 
+def app_context_test_value():
+    return current_app.config['TEST_VALUE']
+
+def request_context_test_value():
+    return request.test_value
+
+def g_context_test_value():
+    return g.test_value
+
+
+# Begin tests
 
 def test_init(app):
     executor = Executor(app)
@@ -91,3 +107,54 @@ def test_process_decorator(app):
     else:
         assert 0
 
+def test_app_context_thread(app):
+    test_value = random.randint(1, 101)
+    app.config['EXECUTOR_TYPE'] = 'thread'
+    app.config['TEST_VALUE'] = test_value
+    executor = Executor(app)
+    future = executor.submit(app_context_test_value)
+    assert future.result() == test_value
+
+def test_request_context_thread(app):
+    test_value = random.randint(1, 101)
+    app.config['EXECUTOR_TYPE'] = 'thread'
+    executor = Executor(app)
+    with app.test_request_context('/'):
+        request.test_value = test_value
+        future = executor.submit(request_context_test_value)
+    assert future.result() == test_value
+
+def test_g_context_thread(app):
+    test_value = random.randint(1, 101)
+    app.config['EXECUTOR_TYPE'] = 'thread'
+    executor = Executor(app)
+    with app.test_request_context(''):
+        g.test_value = test_value
+        future = executor.submit(g_context_test_value)
+    assert future.result() == test_value
+
+def test_app_context_process(app):
+    test_value = random.randint(1, 101)
+    app.config['EXECUTOR_TYPE'] = 'process'
+    app.config['TEST_VALUE'] = test_value
+    executor = Executor(app)
+    future = executor.submit(app_context_test_value)
+    assert future.result() == test_value
+
+def test_request_context_process(app):
+    test_value = random.randint(1, 101)
+    app.config['EXECUTOR_TYPE'] = 'process'
+    executor = Executor(app)
+    with app.test_request_context(''):
+        request.test_value = test_value
+        future = executor.submit(request_context_test_value)
+    assert future.result() == test_value
+
+def test_g_context_process(app):
+    test_value = random.randint(1, 101)
+    app.config['EXECUTOR_TYPE'] = 'process'
+    executor = Executor(app)
+    with app.test_request_context(''):
+        g.test_value = test_value
+        future = executor.submit(g_context_test_value)
+    assert future.result() == test_value

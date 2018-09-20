@@ -1,7 +1,8 @@
 import concurrent.futures
 import sys
 
-from flask import current_app
+from flask import copy_current_request_context, current_app
+from flask.globals import _app_ctx_stack
 
 
 __all__ = ('Executor', )
@@ -14,6 +15,14 @@ workers_multiplier = {
 }
 
 
+def copy_current_app_context(fn):
+    app_context = _app_ctx_stack.top
+    def wrapper(*args, **kwargs):
+        with app_context:
+            return fn(*args, **kwargs)
+    return wrapper
+
+
 def default_workers(executor_type):
     if sys.version_info.major == 3 and sys.version_info.minor in (3, 4):
         try:
@@ -23,13 +32,6 @@ def default_workers(executor_type):
                 return None
         return (cpu_count() or 1) * workers_multiplier[executor_type]
     return None
-
-
-def with_app_context(fn, app):
-    def wrapper(*args, **kwargs):
-        with app.app_context():
-            return fn(*args, **kwargs)
-    return wrapper
 
 
 class ExecutorJob:
@@ -70,13 +72,18 @@ class Executor:
             raise ValueError("{} is not a valid executor type.".format(executor_type))
         return _executor(max_workers=executor_max_workers)
 
+    def _prepare_fn(self, fn):
+        if isinstance(self._executor, concurrent.futures.ThreadPoolExecutor):
+            fn = copy_current_request_context(fn)
+            fn = copy_current_app_context(fn)
+        return fn
+
     def submit(self, fn, *args, **kwargs):
-        if type(self._executor) == concurrent.futures.ThreadPoolExecutor:
-            fn = with_app_context(fn, current_app._get_current_object())
+        fn = self._prepare_fn(fn)
         return self._executor.submit(fn, *args, **kwargs)
 
     def job(self, fn):
-        if type(self._executor) == concurrent.futures.ProcessPoolExecutor:
+        if isinstance(self._executor, concurrent.futures.ProcessPoolExecutor):
             raise TypeError("Can't decorate {}: Executors that use multiprocessing"
                             " don't support decorators".format(fn))
         return ExecutorJob(executor=self, fn=fn)
