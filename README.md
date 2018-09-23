@@ -112,7 +112,7 @@ def example4():
     return 'OK'
 ```
 
-`ThreadPoolExecutor` jobs are also wrapped with a copy of the current app object and executed inside its app context, so that tasks requiring an app context can run outside your main thread.
+Flask-Executor will wrap `ThreadPoolExecutor` jobs with a copy of both the current application context and current request context. Code that depends on information or configuration stored in these contexts can be submitted to the executor without modification.
 
 Note: decoration is not currently supported when using a `ProcessPoolExecutor`, due to the multiprocessing library's inability to work with decorated functions.
 
