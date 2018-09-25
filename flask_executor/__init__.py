@@ -58,7 +58,10 @@ class Executor:
             self.init_app(app)
 
     def init_app(self, app):
-        """Initialise application.
+        """Initialise application. This will also intialise the configured executor type:
+
+            * :class:`concurrent.futures.ThreadPoolExecutor`
+            * :class:`concurrent.futures.ProcessPoolExecutor`
         """
         app.config.setdefault('EXECUTOR_TYPE', 'thread')
         executor_type = app.config['EXECUTOR_TYPE']
