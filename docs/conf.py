@@ -14,6 +14,9 @@
 #
 import os
 import sys
+
+from flask_executor import __version__
+
 sys.path.insert(0, os.path.abspath('..'))
 
 
@@ -24,9 +27,9 @@ copyright = '2018, Dave Chevell'
 author = 'Dave Chevell'
 
 # The short X.Y version
-version = ''
+version = '.'.join(__version__.split('.')[:2])
 # The full version, including alpha/beta/rc tags
-release = '0.5.0'
+release = __version__
 
 
 # -- General configuration ---------------------------------------------------
