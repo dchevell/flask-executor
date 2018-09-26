@@ -57,7 +57,7 @@ Basic Usage
 -----------
 
 Flask-Executor supports the standard :class:`concurrent.futures.Executor` methods,
-`:meth:`~concurrent.futures.Executor.submit` and :meth:`~concurrent.futures.Executor.map`::
+:meth:`~concurrent.futures.Executor.submit` and :meth:`~concurrent.futures.Executor.map`::
 
     def fib(n):
         if n <= 2:
@@ -71,13 +71,18 @@ Flask-Executor supports the standard :class:`concurrent.futures.Executor` method
         executor.map(fib, range(1, 6))
         return 'OK'
 
-When calling `:meth:`~concurrent.futures.Executor.submit` or
-`meth:`~concurrent.futures.Executor.map` Flask-Executor will wrap `ThreadPoolExecutor` callables
-with a copy of both the current application context and current request context. Code that must be
-run in these contexts or that depends on information or configuration stored in
-:data:`flask.current_app`, :data:`flask.request` or :data:`flask.g` can be submitted to the executor
-without modification.
+Submitting a task via :meth:`~concurrent.futures.Executor.submit` returns a
+:class:`concurrent.futures.Future` object from which you can retrieve your job status or result.
 
+
+Contexts
+--------
+
+When calling :meth:`~concurrent.futures.Executor.submit` or :meth:`~concurrent.futures.Executor.map`
+Flask-Executor will wrap `ThreadPoolExecutor` callables with a copy of both the current application
+context and current request context. Code that must be run in these contexts or that depends on
+information or configuration stored in :data:`flask.current_app`, :data:`flask.request` or
+:data:`flask.g` can be submitted to the executor without modification.
 
 Decoration
 ----------
@@ -102,6 +107,8 @@ Flask-Executor lets you decorate methods in the same style as distributed task q
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+
+   api/modules
 
 
 
