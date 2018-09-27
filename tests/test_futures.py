@@ -13,7 +13,7 @@ def fib(n):
 
 
 def test_plain_future():
-    executor = concurrent.futures.ThreadPoolExecutor()
+    executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
     futures = FutureCollection()
     future = executor.submit(fib, 33)
     futures.add('fibonacci', future)
@@ -28,7 +28,7 @@ def test_missing_future():
     assert futures.running('test') is None
 
 def test_duplicate_add_future():
-    executor = concurrent.futures.ThreadPoolExecutor()
+    executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
     futures = FutureCollection()
     future = executor.submit(fib, 33)
     futures.add('fibonacci', future)
@@ -40,7 +40,7 @@ def test_duplicate_add_future():
         assert False
 
 def test_futures_max_length():
-    executor = concurrent.futures.ThreadPoolExecutor()
+    executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
     futures = FutureCollection(max_length=10)
     future = executor.submit(pow, 2, 4)
     futures.add(0, future)

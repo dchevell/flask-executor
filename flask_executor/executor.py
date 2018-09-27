@@ -28,7 +28,7 @@ def default_workers(executor_type):
         except ImportError:
             def cpu_count():
                 return None
-        return (cpu_count() or 1) * workers_multiplier[executor_type]
+        return (cpu_count() or 1) * workers_multiplier.get(executor_type, 1)
     return None
 
 
@@ -90,7 +90,7 @@ class Executor:
             fn = copy_current_app_context(fn)
         return fn
 
-    def submit(self, fn, *args, future_key=None, **kwargs):
+    def submit(self, fn, *args, **kwargs):
         """Schedules the callable, fn, to be executed as fn(\*args \**kwargs) and returns a
         :class:`~concurrent.futures.Future` object representing the execution of the callable.
 
@@ -143,6 +143,7 @@ class Executor:
 
         :rtype: concurrent.futures.Future
         """
+        future_key = kwargs.pop('future_key', None)
         fn = self._prepare_fn(fn)
         future = self._executor.submit(fn, *args, **kwargs)
         if future_key:
