@@ -14,4 +14,3 @@ def app(request):
 def default_app():
     app = Flask(__name__)
     return app
-

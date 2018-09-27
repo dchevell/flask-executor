@@ -28,7 +28,10 @@ class FutureCollection:
         self._futures = OrderedDict()
 
     def __contains__(self, future):
-        return future in self._futures
+        return future in self._futures.values()
+
+    def __len__(self):
+        return len(self._futures)
 
     def __getattr__(self, attr):
         # Call any valid Future method or attribute

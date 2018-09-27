@@ -66,6 +66,10 @@ class Executor:
         executor_type = app.config['EXECUTOR_TYPE']
         executor_max_workers = default_workers(executor_type)
         app.config.setdefault('EXECUTOR_MAX_WORKERS', executor_max_workers)
+        app.config.setdefault('EXECUTOR_FUTURES_MAX_LENGTH', None)
+        futures_max_length = app.config['EXECUTOR_FUTURES_MAX_LENGTH']
+        if futures_max_length:
+            self.futures.max_length = futures_max_length
         self._executor = self._make_executor(app)
         app.extensions['executor'] = self
 
@@ -140,7 +144,10 @@ class Executor:
         :rtype: concurrent.futures.Future
         """
         fn = self._prepare_fn(fn)
-        return self._executor.submit(fn, *args, **kwargs)
+        future = self._executor.submit(fn, *args, **kwargs)
+        if future_key:
+            self.futures.add(future_key, future)
+        return future
 
     def map(self, fn, *iterables, **kwargs):
         """Submits the callable, fn, and an iterable of arguments to the executor and returns the
