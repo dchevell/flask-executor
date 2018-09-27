@@ -84,6 +84,10 @@ context and current request context. Code that must be run in these contexts or 
 information or configuration stored in :data:`flask.current_app`, :data:`flask.request` or
 :data:`flask.g` can be submitted to the executor without modification.
 
+
+Futures
+-------
+
 Decoration
 ----------
 
