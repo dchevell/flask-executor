@@ -162,7 +162,7 @@ def test_map_request_context(app):
 def test_executor_stored_future(default_app):
     executor = Executor(default_app)
     with default_app.test_request_context():
-        future = executor.submit(fib, 35, future_key='fibonacci')
+        future = executor.submit_stored('fibonacci', fib, 35)
     assert executor.futures.done('fibonacci') is False
     assert future in executor.futures
     executor.futures.pop('fibonacci')
