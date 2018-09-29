@@ -42,13 +42,19 @@ class ExecutorJob:
         future = self.executor.submit(self.fn, *args, **kwargs)
         return future
 
+    def submit_stored(self, future_key, *args, **kwargs):
+        future = self.executor.submit_stored(self.fn, future_key, *args, **kwargs)
+        return future
+
     def map(self, *iterables, **kwargs):
         results = self.executor.map(self.fn, *iterables, **kwargs)
         return results
 
 
 class Executor:
-
+    """An executor interface for :py:mod:`concurrent.futures` designed for working with Flask
+    applications.
+    """
     def __init__(self, app=None):
         self.app = app
         self._executor = None
@@ -111,19 +117,33 @@ class Executor:
             future = executor.submit(pow, 323, 1235)
             print(future.result())
 
-        Futures returned from the callable can be stored in the executor via a
-        :class:`~flask_executor.futures.FutureCollection` object available at
+        :param fn: The callable to be executed.
+        :param \*args: A list of positional parameters used with
+                       the callable.
+        :param \**kwargs: A dict of named parameters used with
+                          the callable.
+
+        :rtype: concurrent.futures.Future
+        """
+        fn = self._prepare_fn(fn)
+        return self._executor.submit(fn, *args, **kwargs)
+
+    def submit_stored(self, future_key, fn, *args, **kwargs):
+        """Submits the callable using :meth:`Executor.submit` and stores the Future in the executor
+        via a :class:`~flask_executor.futures.FutureCollection` object available at
         :data:`Executor.futures`. These futures can be retrieved anywhere inside your application
         and queried for status or popped from the collection. Due to memory concerns, the maximum
         length of the FutureCollection is limited, and the oldest Futures will be dropped when the
-        limit is exceeded. See :class:`flask_executor.futures.FutureCollection` for more information
-        on how to query futures from a collection.
+        limit is exceeded.
+
+        See :class:`flask_executor.futures.FutureCollection` for more information
+        on how to query futures in a collection.
 
         Example::
 
             @app.route('/start-task')
             def start_task():
-                executor.submit(pow, 323, 1235, future_key='calc_power')
+                executor.submit_stored('calc_power', pow, 323, 1235)
                 return jsonify({'result':'success'})
 
             @app.route('/get-result')
@@ -133,21 +153,19 @@ class Executor:
                 future = executor.futures.pop('calc_power')
                 return jsonify({'status': done, 'result': future.result()})
 
+        :param future_key: Stores future for the submitted task inside the
+                           executor's ``futures`` object with the specified key.
         :param fn: The callable to be executed.
         :param \*args: A list of positional parameters used with
                        the callable.
-        :param future_key: If specified, will store the future for the submitted task inside the
-                           executor's ``futures`` object with the specified key.
         :param \**kwargs: A dict of named parameters used with
                           the callable.
 
         :rtype: concurrent.futures.Future
         """
-        future_key = kwargs.pop('future_key', None)
-        fn = self._prepare_fn(fn)
-        future = self._executor.submit(fn, *args, **kwargs)
-        if future_key:
-            self.futures.add(future_key, future)
+
+        future = self.submit(fn, *args, **kwargs)
+        self.futures.add(future_key, future)
         return future
 
     def map(self, fn, *iterables, **kwargs):
