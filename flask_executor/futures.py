@@ -44,7 +44,7 @@ class FutureCollection:
             return future_attr
         return _future_attr
 
-    def _check_size_limit(self):
+    def _check_limits(self):
         if self.max_length is not None:
             while len(self._futures) > self.max_length:
                 self._futures.popitem(last=False)
@@ -59,7 +59,7 @@ class FutureCollection:
         if future_key in self._futures:
             raise ValueError("future_key {} already exists".format(future_key))
         self._futures[future_key] = future
-        self._check_size_limit()
+        self._check_limits()
 
     def pop(self, future_key):
         """Return a Future and remove it from the collection. Futures that are ready to be used
