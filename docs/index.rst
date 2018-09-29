@@ -88,6 +88,24 @@ information or configuration stored in :data:`flask.current_app`, :data:`flask.r
 Futures
 -------
 
+You may want to preserve access to Futures returned from the executor, so that you can retrieve the
+results in a different part of your application. Flask-Executor allows Futures to be stored within
+the executor itself and provides methods for querying and returning them in different parts of your
+app::
+
+    @app.route('/start-task')
+    def start_task():
+        executor.submit_stored('calc_power', pow, 323, 1235)
+        return jsonify({'result':'success'})
+
+    @app.route('/get-result')
+    def get_result():
+        if not executor.futures.done('calc_power'):
+            return jsonify({'status': executor.futures._state('calc_power')})
+        future = executor.futures.pop('calc_power')
+        return jsonify({'status': done, 'result': future.result()})
+
+
 Decoration
 ----------
 
