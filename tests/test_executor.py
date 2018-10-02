@@ -4,7 +4,8 @@ import random
 from flask import Flask, current_app, g, request
 import pytest
 
-from flask_executor import Executor, ExecutorJob
+from flask_executor import Executor
+from flask_executor.executor import ExecutorJob
 
 
 # Reusable functions for tests
@@ -49,6 +50,15 @@ def test_process_executor_init(default_app):
 def test_default_executor_init(default_app):
     executor = Executor(default_app)
     assert isinstance(executor._executor, concurrent.futures.ThreadPoolExecutor)
+
+def test_invalid_executor_init(default_app):
+    default_app.config['EXECUTOR_TYPE'] = 'invalid_value'
+    try:
+        executor = Executor(default_app)
+    except ValueError:
+        assert True
+    else:
+        assert False
 
 def test_submit(app):
     executor = Executor(app)
@@ -148,3 +158,17 @@ def test_map_request_context(app):
         results = executor.map(request_context_test_value, iterator)
     for r in results:
         assert r == test_value
+
+def test_executor_stored_future(default_app):
+    executor = Executor(default_app)
+    with default_app.test_request_context():
+        future = executor.submit_stored('fibonacci', fib, 35)
+    assert executor.futures.done('fibonacci') is False
+    assert future in executor.futures
+    executor.futures.pop('fibonacci')
+    assert future not in executor.futures
+
+def test_set_max_futures(default_app):
+    default_app.config['EXECUTOR_FUTURES_MAX_LENGTH'] = 10
+    executor = Executor(default_app)
+    assert executor.futures.max_length == default_app.config['EXECUTOR_FUTURES_MAX_LENGTH']
