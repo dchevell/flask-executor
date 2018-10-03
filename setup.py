@@ -44,7 +44,7 @@ setuptools.setup(
     extras_require={
         ':python_version == "2.7"': ['futures']
     },
-    tests_require=['pytest-flask', 'pytest'],
+    tests_require=['pytest', 'pytest-flask', 'python-coveralls'],
     test_suite='tests',
     cmdclass={
         'test': pytest
