@@ -81,6 +81,19 @@ def test_thread_decorator_submit(default_app):
         future = decorated.submit(5)
     assert future.result() == fib(5)
 
+def test_thread_decorator_submit_stored(default_app):
+    default_app.config['EXECUTOR_TYPE'] = 'thread'
+    executor = Executor(default_app)
+    @executor.job
+    def decorated(n):
+        return fib(n)
+    with default_app.test_request_context():
+        future = decorated.submit_stored('fibonacci', 35)
+    assert executor.futures.done('fibonacci') is False
+    assert future in executor.futures
+    executor.futures.pop('fibonacci')
+    assert future not in executor.futures
+
 def test_thread_decorator_map(default_app):
     iterable = list(range(5))
     default_app.config['EXECUTOR_TYPE'] = 'thread'

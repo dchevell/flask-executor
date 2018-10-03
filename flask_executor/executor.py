@@ -43,7 +43,7 @@ class ExecutorJob:
         return future
 
     def submit_stored(self, future_key, *args, **kwargs):
-        future = self.executor.submit_stored(self.fn, future_key, *args, **kwargs)
+        future = self.executor.submit_stored(future_key, self.fn, *args, **kwargs)
         return future
 
     def map(self, *iterables, **kwargs):
