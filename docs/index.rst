@@ -122,6 +122,7 @@ Flask-Executor lets you decorate methods in the same style as distributed task q
     @app.route('/decorate_fib')
     def decorate_fib():
         fib.submit(5)
+        fib.submit_stored('fibonacci', 5)
         fib.map(range(1, 6))
         return 'OK'
 

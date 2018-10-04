@@ -17,7 +17,7 @@ Flask-Executor is available on PyPI and can be installed with:
 
 
 Quick start
------
+-----------
 
 Here's a quick example of using Flask-Executor inside your Flask application:
 
@@ -39,6 +39,61 @@ def send_email(recipient, subject, body):
 def signup():
     # Do signup form
     executor.submit(send_email, recipient, subject, body)
+```
+
+
+Contexts
+--------
+
+When calling `submit()` or `map()` Flask-Executor will wrap `ThreadPoolExecutor` callables with a
+copy of both the current application context and current request context. Code that must be run in
+these contexts or that depends on information or configuration stored in `flask.current_app`,
+`flask.request` or `flask.g` can be submitted to the executor without modification.
+
+
+Futures
+-------
+
+You may want to preserve access to Futures returned from the executor, so that you can retrieve the
+results in a different part of your application. Flask-Executor allows Futures to be stored within
+the executor itself and provides methods for querying and returning them in different parts of your
+app::
+
+```python
+@app.route('/start-task')
+def start_task():
+    executor.submit_stored('calc_power', pow, 323, 1235)
+    return jsonify({'result':'success'})
+
+@app.route('/get-result')
+def get_result():
+    if not executor.futures.done('calc_power'):
+        return jsonify({'status': executor.futures._state('calc_power')})
+    future = executor.futures.pop('calc_power')
+    return jsonify({'status': done, 'result': future.result()})
+```
+
+
+Decoration
+----------
+
+Flask-Executor lets you decorate methods in the same style as distributed task queues like
+Celery:
+
+```python
+@executor.job
+def fib(n):
+    if n <= 2:
+        return 1
+    else:
+        return fib(n-1) + fib(n-2)
+
+@app.route('/decorate_fib')
+def decorate_fib():
+    fib.submit(5)
+    fib.submit_stored('fibonacci', 5)
+    fib.map(range(1, 6))
+    return 'OK'
 ```
 
 
