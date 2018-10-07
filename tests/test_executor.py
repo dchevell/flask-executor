@@ -1,11 +1,12 @@
 import concurrent.futures
+from multiprocessing import cpu_count
 import random
 
 from flask import Flask, current_app, g, request
 import pytest
 
 from flask_executor import Executor
-from flask_executor.executor import ExecutorJob
+from flask_executor.executor import ExecutorJob, default_workers, workers_multiplier
 
 
 # Reusable functions for tests
@@ -59,6 +60,16 @@ def test_invalid_executor_init(default_app):
         assert True
     else:
         assert False
+
+def test_default_workers(app):
+    executor_type = app.config['EXECUTOR_TYPE']
+    assert default_workers(executor_type, 2, 6) == None
+    assert default_workers(executor_type, 2, 7) == None
+    assert default_workers(executor_type, 3, 0) == None
+    assert default_workers(executor_type, 3, 1) == None
+    assert default_workers(executor_type, 3, 2) == None
+    assert default_workers(executor_type, 3, 3) == cpu_count() * workers_multiplier[executor_type]
+    assert default_workers(executor_type, 3, 4) == cpu_count() * workers_multiplier[executor_type]
 
 def test_submit(app):
     executor = Executor(app)
