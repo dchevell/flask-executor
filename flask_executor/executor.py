@@ -21,13 +21,9 @@ def copy_current_app_context(fn):
     return wrapper
 
 
-def default_workers(executor_type):
-    if sys.version_info.major == 3 and sys.version_info.minor in (3, 4):
-        try:
-            from multiprocessing import cpu_count
-        except ImportError:
-            def cpu_count():
-                return None
+def default_workers(executor_type, major=sys.version_info.major, minor=sys.version_info.minor):
+    if major == 3 and minor in (3, 4):
+        from os import cpu_count
         return (cpu_count() or 1) * workers_multiplier.get(executor_type, 1)
     return None
 
