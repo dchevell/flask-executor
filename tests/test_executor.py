@@ -6,7 +6,7 @@ from flask import Flask, current_app, g, request
 import pytest
 
 from flask_executor import Executor
-from flask_executor.executor import ExecutorJob, default_workers, workers_multiplier
+from flask_executor.executor import ExecutorJob, default_workers, WORKERS_MULTIPLIER
 
 
 # Reusable functions for tests
@@ -68,8 +68,8 @@ def test_default_workers(app):
     assert default_workers(executor_type, 3, 0) == None
     assert default_workers(executor_type, 3, 1) == None
     assert default_workers(executor_type, 3, 2) == None
-    assert default_workers(executor_type, 3, 3) == cpu_count() * workers_multiplier[executor_type]
-    assert default_workers(executor_type, 3, 4) == cpu_count() * workers_multiplier[executor_type]
+    assert default_workers(executor_type, 3, 3) == cpu_count() * WORKERS_MULTIPLIER[executor_type]
+    assert default_workers(executor_type, 3, 4) == cpu_count() * WORKERS_MULTIPLIER[executor_type]
 
 def test_submit(app):
     executor = Executor(app)

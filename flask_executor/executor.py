@@ -1,15 +1,15 @@
 import concurrent.futures
 import sys
 
-from flask import copy_current_request_context, current_app
+from flask import copy_current_request_context
 from flask.globals import _app_ctx_stack
 
 from flask_executor.futures import FutureCollection
 
 
-workers_multiplier = {
-        'thread': 1,
-        'process': 5
+WORKERS_MULTIPLIER = {
+    'thread': 1,
+    'process': 5
 }
 
 
@@ -24,7 +24,7 @@ def copy_current_app_context(fn):
 def default_workers(executor_type, major=sys.version_info.major, minor=sys.version_info.minor):
     if major == 3 and minor in (3, 4):
         from multiprocessing import cpu_count
-        return (cpu_count() or 1) * workers_multiplier.get(executor_type, 1)
+        return (cpu_count() or 1) * WORKERS_MULTIPLIER.get(executor_type, 1)
     return None
 
 
