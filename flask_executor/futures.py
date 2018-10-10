@@ -2,27 +2,31 @@ from collections import OrderedDict
 
 
 class FutureCollection:
+    """A FutureCollection is an object to store and interact with
+    :class:`concurrent.futures.Future` objects. It provides access to all
+    attributes and methods of a Future by proxying attribute calls to the
+    stored Future object.
 
-    """A FutureCollection is an object to store and interact with :class:`concurrent.futures.Future`
-    objects. It provides access to all attributes and methods of a Future by proxying attribute
-    calls to the stored Future object.
+    To access the methods of a Future from a FutureCollection instance, include
+    a valid ``future_key`` value as the first argument of the method call. To
+    access attributes, call them as though they were a method with
+    ``future_key`` as the sole argument. If ``future_key`` does not exist, the
+    call will always return None. If ``future_key`` does exist but the
+    referenced Future does not contain the requested attribute an
+    :exc:`AttributeError` will be raised.
 
-    To access the methods of a Future from a FutureCollection instance, include a valid
-    ``future_key`` value as the first argument of the method call. To access attributes, call them
-    as though they were a method with ``future_key`` as the sole argument. If ``future_key`` does
-    not exist, the call will always return None. If ``future_key`` does exist but the referenced
-    Future does not contain the requested attribute an :exc:`AttributeError` will be raised.
+    To prevent memory exhaustion a FutureCollection instance can be bounded by
+    number of items using the ``max_length`` parameter. As a best practice,
+    Futures should be popped once they are ready for use, with the proxied
+    attribute form used to determine whether a Future is ready to be used or
+    discarded.
 
-    To prevent memory exhaustion a FutureCollection instance can be bounded by number of items using
-    the ``max_length`` parameter. As a best practice, Futures should be popped once they are ready
-    for use, with the proxied attribute form used to determine whether a Future is ready to be used
-    or discarded.
-
-    :param max_length: Maximum number of Futures to store. Oldest Futures are discarded first.
+    :param max_length: Maximum number of Futures to store. Oldest Futures are
+    discarded first.
 
     """
-    def __init__(self, max_length=50):
 
+    def __init__(self, max_length=50):
         self.max_length = max_length
         self._futures = OrderedDict()
 
@@ -41,6 +45,7 @@ class FutureCollection:
             if callable(future_attr):
                 return future_attr(*args, **kwargs)
             return future_attr
+
         return _future_attr
 
     def _check_limits(self):
@@ -49,8 +54,8 @@ class FutureCollection:
                 self._futures.popitem(last=False)
 
     def add(self, future_key, future):
-        """Add a new Future. If ``max_length`` limit was defined for the FutureCollection, old
-        Futures may be dropped to respect this limit.
+        """Add a new Future. If ``max_length`` limit was defined for the
+        FutureCollection, old Futures may be dropped to respect this limit.
 
         :param future_key: Key for the Future to be added.
         :param future: Future to be added.
@@ -61,8 +66,9 @@ class FutureCollection:
         self._check_limits()
 
     def pop(self, future_key):
-        """Return a Future and remove it from the collection. Futures that are ready to be used
-        should always be popped so they do not continue to consume memory.
+        """Return a Future and remove it from the collection. Futures that are
+        ready to be used should always be popped so they do not continue to
+        consume memory.
 
         Returns ``None`` if the key doesn't exist.
 

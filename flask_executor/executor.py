@@ -1,5 +1,5 @@
 import concurrent.futures
-import sys
+from sys import version_info
 
 from flask import copy_current_request_context
 from flask.globals import _app_ctx_stack
@@ -7,28 +7,30 @@ from flask.globals import _app_ctx_stack
 from flask_executor.futures import FutureCollection
 
 
-WORKERS_MULTIPLIER = {
-    'thread': 1,
-    'process': 5
-}
+WORKERS_MULTIPLIER = {'thread': 1, 'process': 5}
 
 
 def copy_current_app_context(fn):
     app_context = _app_ctx_stack.top
+
     def wrapper(*args, **kwargs):
         with app_context:
             return fn(*args, **kwargs)
+
     return wrapper
 
 
-def default_workers(executor_type, major=sys.version_info.major, minor=sys.version_info.minor):
+def default_workers(executor_type, major=version_info.major, minor=version_info.minor):
     if major == 3 and minor in (3, 4):
         from multiprocessing import cpu_count
+
         return (cpu_count() or 1) * WORKERS_MULTIPLIER.get(executor_type, 1)
     return None
 
 
 class ExecutorJob:
+    """Wraps a function with an executor so to allow the wrapped function to
+    submit itself directly to the executor."""
 
     def __init__(self, executor, fn):
         self.executor = executor
@@ -48,9 +50,10 @@ class ExecutorJob:
 
 
 class Executor:
-    """An executor interface for :py:mod:`concurrent.futures` designed for working with Flask
-    applications.
+    """An executor interface for :py:mod:`concurrent.futures` designed for
+    working with Flask applications.
     """
+
     def __init__(self, app=None):
         self.app = app
         self._executor = None
@@ -59,7 +62,8 @@ class Executor:
             self.init_app(app)
 
     def init_app(self, app):
-        """Initialise application. This will also intialise the configured executor type:
+        """Initialise application. This will also intialise the configured
+        executor type:
 
             * :class:`concurrent.futures.ThreadPoolExecutor`
             * :class:`concurrent.futures.ProcessPoolExecutor`
@@ -93,20 +97,23 @@ class Executor:
         return fn
 
     def submit(self, fn, *args, **kwargs):
-        """Schedules the callable, fn, to be executed as fn(\*args \**kwargs) and returns a
-        :class:`~concurrent.futures.Future` object representing the execution of the callable.
+        """Schedules the callable, fn, to be executed as fn(\*args \**kwargs)
+        and returns a :class:`~concurrent.futures.Future` object representing
+        the execution of the callable.
 
         See also :meth:`concurrent.futures.Executor.submit`.
 
-        Callables are wrapped a copy of the current application context and the current request
-        context. Code that depends on information or configuration stored in
-        :data:`flask.current_app`, :data:`flask.request` or :data:`flask.g` can be run without
+        Callables are wrapped a copy of the current application context and the
+        current request context. Code that depends on information or
+        configuration stored in :data:`flask.current_app`,
+        :data:`flask.request` or :data:`flask.g` can be run without
         modification.
 
-        Note: Because callables only have access to *copies* of the application or request contexts
-        any changes made to these copies will not be reflected in the original view. Further,
-        changes in the original app or request context that occur after the callable is submitted
-        will not be available to the callable.
+        Note: Because callables only have access to *copies* of the application
+        or request contexts any changes made to these copies will not be
+        reflected in the original view. Further, changes in the original app or
+        request context that occur after the callable is submitted will not be
+        available to the callable.
 
         Example::
 
@@ -125,15 +132,17 @@ class Executor:
         return self._executor.submit(fn, *args, **kwargs)
 
     def submit_stored(self, future_key, fn, *args, **kwargs):
-        """Submits the callable using :meth:`Executor.submit` and stores the Future in the executor
-        via a :class:`~flask_executor.futures.FutureCollection` object available at
-        :data:`Executor.futures`. These futures can be retrieved anywhere inside your application
-        and queried for status or popped from the collection. Due to memory concerns, the maximum
-        length of the FutureCollection is limited, and the oldest Futures will be dropped when the
-        limit is exceeded.
+        """Submits the callable using :meth:`Executor.submit` and stores the
+        Future in the executor via a
+        :class:`~flask_executor.futures.FutureCollection` object available at
+        :data:`Executor.futures`. These futures can be retrieved anywhere
+        inside your application and queried for status or popped from the
+        collection. Due to memory concerns, the maximum length of the
+        FutureCollection is limited, and the oldest Futures will be dropped
+        when the limit is exceeded.
 
-        See :class:`flask_executor.futures.FutureCollection` for more information
-        on how to query futures in a collection.
+        See :class:`flask_executor.futures.FutureCollection` for more
+        information on how to query futures in a collection.
 
         Example::
 
@@ -145,12 +154,14 @@ class Executor:
             @app.route('/get-result')
             def get_result():
                 if not executor.futures.done('calc_power'):
-                    return jsonify({'status': executor.futures._state('calc_power')})
+                    future_status = executor.futures._state('calc_power')
+                    return jsonify({'status': future_status})
                 future = executor.futures.pop('calc_power')
                 return jsonify({'status': done, 'result': future.result()})
 
-        :param future_key: Stores future for the submitted task inside the
-                           executor's ``futures`` object with the specified key.
+        :param future_key: Stores the Future for the submitted task inside the
+                           executor's ``futures`` object with the specified
+                           key.
         :param fn: The callable to be executed.
         :param \*args: A list of positional parameters used with
                        the callable.
@@ -159,38 +170,41 @@ class Executor:
 
         :rtype: concurrent.futures.Future
         """
-
         future = self.submit(fn, *args, **kwargs)
         self.futures.add(future_key, future)
         return future
 
     def map(self, fn, *iterables, **kwargs):
-        """Submits the callable, fn, and an iterable of arguments to the executor and returns the
-        results inside a generator.
+        """Submits the callable, fn, and an iterable of arguments to the
+        executor and returns the results inside a generator.
 
         See also :meth:`concurrent.futures.Executor.map`.
 
-        Callables are wrapped a copy of the current application context and the current request
-        context. Code that depends on information or configuration stored in
-        :data:`flask.current_app`, :data:`flask.request` or :data:`flask.g` can be run without
+        Callables are wrapped a copy of the current application context and the
+        current request context. Code that depends on information or
+        configuration stored in :data:`flask.current_app`,
+        :data:`flask.request` or :data:`flask.g` can be run without
         modification.
 
-        Note: Because callables only have access to *copies* of the application or request contexts
-        any changes made to these copies will not be reflected in the original view. Further,
-        changes in the original app or request context that occur after the callable is submitted
-        will not be available to the callable.
+        Note: Because callables only have access to *copies* of the application
+        or request contexts
+        any changes made to these copies will not be reflected in the original
+        view. Further, changes in the original app or request context that
+        occur after the callable is submitted will not be available to the
+        callable.
 
         :param fn: The callable to be executed.
         :param \*iterables: An iterable of arguments the callable will apply to.
-        :param \**kwargs: A dict of named parameters to pass to the underlying executor's
-                          :meth:`~concurrent.futures.Executor.map` method.
+        :param \**kwargs: A dict of named parameters to pass to the underlying
+                          executor's :meth:`~concurrent.futures.Executor.map`
+                          method.
         """
         fn = self._prepare_fn(fn)
         return self._executor.map(fn, *iterables, **kwargs)
 
     def job(self, fn):
-        """Decorator. Use this to transform functions into `ExecutorJob` instances that can submit
-        themselves directly to the executor.
+        """Decorator. Use this to transform functions into `ExecutorJob`
+        instances that can submit themselves directly to the executor.
 
         Example::
 
@@ -205,9 +219,8 @@ class Executor:
             results = fib.map(range(1, 6))
         """
         if isinstance(self._executor, concurrent.futures.ProcessPoolExecutor):
-            raise TypeError("Can't decorate {}: Executors that use multiprocessing"
-                            " don't support decorators".format(fn))
+            raise TypeError(
+                "Can't decorate {}: Executors that use multiprocessing "
+                "don't support decorators".format(fn)
+            )
         return ExecutorJob(executor=self, fn=fn)
-
-
-
