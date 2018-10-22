@@ -1,6 +1,14 @@
 import concurrent.futures
 from sys import version_info
 
+try:
+    from multiprocessing import cpu_count
+except ImportError:
+    # some platforms don't have multiprocessing
+    def cpu_count():
+        return None
+
+
 from flask import copy_current_request_context
 from flask.globals import _app_ctx_stack
 
@@ -8,6 +16,12 @@ from flask_executor.futures import FutureCollection
 
 
 WORKERS_MULTIPLIER = {'thread': 1, 'process': 5}
+
+
+def default_workers(executor_type, major=version_info.major, minor=version_info.minor):
+    if not (major == 3 and minor in (3, 4)):
+        return None
+    return cpu_count() * WORKERS_MULTIPLIER.get(executor_type, 1)
 
 
 def copy_current_app_context(fn):
@@ -18,14 +32,6 @@ def copy_current_app_context(fn):
             return fn(*args, **kwargs)
 
     return wrapper
-
-
-def default_workers(executor_type, major=version_info.major, minor=version_info.minor):
-    if major == 3 and minor in (3, 4):
-        from multiprocessing import cpu_count
-
-        return (cpu_count() or 1) * WORKERS_MULTIPLIER.get(executor_type, 1)
-    return None
 
 
 class ExecutorJob:
