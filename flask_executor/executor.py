@@ -1,12 +1,6 @@
 import concurrent.futures
+from multiprocessing import cpu_count
 from sys import version_info
-
-try:
-    from multiprocessing import cpu_count
-except ImportError:
-    # some platforms don't have multiprocessing
-    def cpu_count():
-        return None
 
 
 from flask import copy_current_request_context
