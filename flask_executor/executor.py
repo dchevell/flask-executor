@@ -1,5 +1,6 @@
 import concurrent.futures
 from multiprocessing import cpu_count
+import re
 from sys import version_info
 
 
@@ -52,12 +53,28 @@ class ExecutorJob:
 class Executor:
     """An executor interface for :py:mod:`concurrent.futures` designed for
     working with Flask applications.
+
+    :param app: A Flask application instance.
+    :param name: An optional name for the executor. This can be used to
+                 configure multiple executors. Named executors will look for
+                 environment variables prefixed with the name in uppercase,
+                 e.g. ``CUSTOM_EXECUTOR_TYPE``.
     """
 
-    def __init__(self, app=None):
+    def __init__(self, app=None, name=''):
         self.app = app
         self._executor = None
         self.futures = FutureCollection()
+        if re.match(r'^(\w+)?$', name) is None:
+            raise ValueError(
+                "Executor names may only contain letters, numbers or underscores"
+            )
+        self.name = name
+        if len(name) > 0:
+            name = name.upper() + '_'
+        self.EXECUTOR_TYPE = name + 'EXECUTOR_TYPE'
+        self.EXECUTOR_MAX_WORKERS = name + 'EXECUTOR_MAX_WORKERS'
+        self.EXECUTOR_FUTURES_MAX_LENGTH = name + 'EXECUTOR_FUTURES_MAX_LENGTH'
         if app is not None:
             self.init_app(app)
 
@@ -68,20 +85,20 @@ class Executor:
             * :class:`concurrent.futures.ThreadPoolExecutor`
             * :class:`concurrent.futures.ProcessPoolExecutor`
         """
-        app.config.setdefault('EXECUTOR_TYPE', 'thread')
-        executor_type = app.config['EXECUTOR_TYPE']
+        app.config.setdefault(self.EXECUTOR_TYPE, 'thread')
+        executor_type = app.config[self.EXECUTOR_TYPE]
         executor_max_workers = default_workers(executor_type)
-        app.config.setdefault('EXECUTOR_MAX_WORKERS', executor_max_workers)
-        app.config.setdefault('EXECUTOR_FUTURES_MAX_LENGTH', None)
-        futures_max_length = app.config['EXECUTOR_FUTURES_MAX_LENGTH']
+        app.config.setdefault(self.EXECUTOR_MAX_WORKERS, executor_max_workers)
+        app.config.setdefault(self.EXECUTOR_FUTURES_MAX_LENGTH, None)
+        futures_max_length = app.config[self.EXECUTOR_FUTURES_MAX_LENGTH]
         if futures_max_length:
             self.futures.max_length = futures_max_length
         self._executor = self._make_executor(app)
-        app.extensions['executor'] = self
+        app.extensions[self.name + 'executor'] = self
 
     def _make_executor(self, app):
-        executor_type = app.config['EXECUTOR_TYPE']
-        executor_max_workers = app.config['EXECUTOR_MAX_WORKERS']
+        executor_type = app.config[self.EXECUTOR_TYPE]
+        executor_max_workers = app.config[self.EXECUTOR_MAX_WORKERS]
         if executor_type == 'thread':
             _executor = concurrent.futures.ThreadPoolExecutor
         elif executor_type == 'process':

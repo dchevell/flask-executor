@@ -196,3 +196,31 @@ def test_set_max_futures(default_app):
     default_app.config['EXECUTOR_FUTURES_MAX_LENGTH'] = 10
     executor = Executor(default_app)
     assert executor.futures.max_length == default_app.config['EXECUTOR_FUTURES_MAX_LENGTH']
+
+def test_named_executor(default_app):
+    name = 'custom'
+    EXECUTOR_MAX_WORKERS = 5
+    CUSTOM_EXECUTOR_MAX_WORKERS = 10
+    default_app.config['EXECUTOR_MAX_WORKERS'] = EXECUTOR_MAX_WORKERS
+    default_app.config['CUSTOM_EXECUTOR_MAX_WORKERS'] = CUSTOM_EXECUTOR_MAX_WORKERS
+    executor = Executor(default_app)
+    custom_executor = Executor(default_app, name=name)
+    assert 'executor' in default_app.extensions
+    assert name + 'executor' in default_app.extensions
+    assert executor._executor._max_workers == EXECUTOR_MAX_WORKERS
+    assert custom_executor._executor._max_workers == CUSTOM_EXECUTOR_MAX_WORKERS
+
+def test_named_executor_submit(app):
+    name = 'custom'
+    custom_executor = Executor(app, name=name)
+    future = custom_executor.submit(fib, 5)
+    assert future.result() == fib(5)
+
+def test_named_executor_name(default_app):
+    name = 'invalid name'
+    try:
+        executor = Executor(default_app, name=name)
+    except ValueError:
+        assert True
+    else:
+        assert False
