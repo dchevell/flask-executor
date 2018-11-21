@@ -42,7 +42,7 @@ setuptools.setup(
     license='MIT',
     install_requires=['Flask'],
     extras_require={
-        ':python_version == "2.7"': ['futures']
+        ':python_version == "2.7"': ['futures>=3.1.1']
     },
     tests_require=['pytest', 'pytest-flask', 'python-coveralls'],
     test_suite='tests',
