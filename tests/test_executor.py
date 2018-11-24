@@ -30,6 +30,7 @@ def g_context_test_value(_=None):
 def test_init(app):
     executor = Executor(app)
     assert 'executor' in app.extensions
+    assert isinstance(executor, concurrent.futures._base.Executor)
     assert isinstance(executor._executor, concurrent.futures._base.Executor)
 
 def test_factory_init(app):

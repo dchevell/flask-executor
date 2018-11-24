@@ -50,7 +50,7 @@ class ExecutorJob:
         return results
 
 
-class Executor:
+class Executor(concurrent.futures._base.Executor):
     """An executor interface for :py:mod:`concurrent.futures` designed for
     working with Flask applications.
 
@@ -77,6 +77,10 @@ class Executor:
         self.EXECUTOR_FUTURES_MAX_LENGTH = name + 'EXECUTOR_FUTURES_MAX_LENGTH'
         if app is not None:
             self.init_app(app)
+
+    def __getattr__(self, attr):
+        # Call any valid Executor method or attribute
+        return getattr(self._executor, attr)
 
     def init_app(self, app):
         """Initialise application. This will also intialise the configured
