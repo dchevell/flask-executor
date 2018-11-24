@@ -4,7 +4,7 @@ import time
 import pytest
 
 from flask_executor import Executor
-from flask_executor.futures import FutureCollection
+from flask_executor.futures import FutureCollection, FutureProxy
 
 
 def fib(n):
@@ -52,6 +52,19 @@ def test_futures_max_length():
         futures.add(i, executor.submit(pow, 2, 4))
     assert len(futures) == 10
     assert future not in futures
+
+def test_future_proxy(default_app):
+    executor = Executor(default_app)
+    with default_app.test_request_context(''):
+        future = executor.submit(pow, 2, 4)
+    # Test if we're returning a subclass of Future
+    assert isinstance(future, concurrent.futures.Future)
+    assert isinstance(future, FutureProxy)
+    concurrent.futures.wait([future])
+    # test standard Future methods and attributes
+    assert future._state == concurrent.futures._base.FINISHED
+    assert future.done()
+    assert future.exception(timeout=0) is None
 
 def test_add_done_callback(default_app):
     """Exceptions thrown in callbacks can't be easily caught and make it hard
