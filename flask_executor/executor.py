@@ -7,7 +7,7 @@ from sys import version_info
 from flask import copy_current_request_context
 from flask.globals import _app_ctx_stack
 
-from flask_executor.futures import FutureCollection
+from flask_executor.futures import FutureCollection, FutureProxy
 
 
 WORKERS_MULTIPLIER = {'thread': 1, 'process': 5}
@@ -115,7 +115,8 @@ class Executor:
 
     def submit(self, fn, *args, **kwargs):
         """Schedules the callable, fn, to be executed as fn(\*args \**kwargs)
-        and returns a :class:`~concurrent.futures.Future` object representing
+        and returns a :class:`~flask_executor.futures.FutureProxy` object, a
+        :class:`~concurrent.futures.Future` subclass representing
         the execution of the callable.
 
         See also :meth:`concurrent.futures.Executor.submit`.
@@ -143,10 +144,11 @@ class Executor:
         :param \**kwargs: A dict of named parameters used with
                           the callable.
 
-        :rtype: concurrent.futures.Future
+        :rtype: flask_executor.FutureProxy
         """
         fn = self._prepare_fn(fn)
-        return self._executor.submit(fn, *args, **kwargs)
+        future = self._executor.submit(fn, *args, **kwargs)
+        return FutureProxy(self, future)
 
     def submit_stored(self, future_key, fn, *args, **kwargs):
         """Submits the callable using :meth:`Executor.submit` and stores the
