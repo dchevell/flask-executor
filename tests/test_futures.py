@@ -1,7 +1,9 @@
 import concurrent.futures
+import time
 
 import pytest
 
+from flask_executor import Executor
 from flask_executor.futures import FutureCollection
 
 
@@ -51,3 +53,22 @@ def test_futures_max_length():
     assert len(futures) == 10
     assert future not in futures
 
+def test_add_done_callback(default_app):
+    """Exceptions thrown in callbacks can't be easily caught and make it hard
+    to test for callback failure. To combat this, a global variable is used to
+    store the value of an exception and test for its existence.
+    """
+    executor = Executor(default_app)
+    global exception
+    exception = None
+    with default_app.test_request_context(''):
+        future = executor.submit(time.sleep, 0.5)
+        def callback(future):
+            global exception
+            try:
+                executor.submit(time.sleep, 0)
+            except RuntimeError as e:
+                exception = e
+        future.add_done_callback(callback)
+    concurrent.futures.wait([future])
+    assert exception is None
