@@ -80,6 +80,7 @@ Flask-Executor supports the standard :class:`concurrent.futures.Executor` method
         return 'OK'
 
 Submitting a task via :meth:`~concurrent.futures.Executor.submit` returns a
+:class:`flask_executor.FutureProxy` object, a subclass of 
 :class:`concurrent.futures.Future` object from which you can retrieve your job status or result.
 
 
@@ -95,6 +96,11 @@ information or configuration stored in :data:`flask.current_app`, :data:`flask.r
 
 Futures
 -------
+
+:class:`flask_executor.FutureProxy` objects look and behave like normal :class:`concurrent.futures.Future`
+objects, but allow `flask_executor` to override certain methods and add additional behaviours.
+When submitting a callable to :meth:`~concurrent.futures.Future.add_done_callback`, callables are
+wrapped with a copy of both the current application context and current request context.
 
 You may want to preserve access to Futures returned from the executor, so that you can retrieve the
 results in a different part of your application. Flask-Executor allows Futures to be stored within
