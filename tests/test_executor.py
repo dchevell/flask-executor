@@ -32,6 +32,7 @@ def test_init(app):
     assert 'executor' in app.extensions
     assert isinstance(executor, concurrent.futures._base.Executor)
     assert isinstance(executor._executor, concurrent.futures._base.Executor)
+    assert executor.__getattr__('shutdown')
 
 def test_factory_init(app):
     executor = Executor()
@@ -74,7 +75,8 @@ def test_default_workers(app):
 
 def test_submit(app):
     executor = Executor(app)
-    future = executor.submit(fib, 5)
+    with app.test_request_context(''):
+        future = executor.submit(fib, 5)
     assert future.result() == fib(5)
 
 def test_max_workers(app):
@@ -135,7 +137,8 @@ def test_submit_app_context(app):
     test_value = random.randint(1, 101)
     app.config['TEST_VALUE'] = test_value
     executor = Executor(app)
-    future = executor.submit(app_context_test_value)
+    with app.test_request_context(''):
+        future = executor.submit(app_context_test_value)
     assert future.result() == test_value
 
 def test_submit_g_context_process(app):
@@ -214,7 +217,8 @@ def test_named_executor(default_app):
 def test_named_executor_submit(app):
     name = 'custom'
     custom_executor = Executor(app, name=name)
-    future = custom_executor.submit(fib, 5)
+    with app.test_request_context(''):
+        future = custom_executor.submit(fib, 5)
     assert future.result() == fib(5)
 
 def test_named_executor_name(default_app):
