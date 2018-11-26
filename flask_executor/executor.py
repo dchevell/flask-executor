@@ -111,8 +111,9 @@ class Executor(concurrent.futures._base.Executor):
             raise ValueError("{} is not a valid executor type.".format(executor_type))
         return _executor(max_workers=executor_max_workers)
 
-    def _prepare_fn(self, fn):
-        if isinstance(self._executor, concurrent.futures.ThreadPoolExecutor):
+    def _prepare_fn(self, fn, force_copy=False):
+        if isinstance(self._executor, concurrent.futures.ThreadPoolExecutor) \
+            or force_copy:
             fn = copy_current_request_context(fn)
             fn = copy_current_app_context(fn)
         return fn

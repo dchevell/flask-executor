@@ -99,5 +99,5 @@ class FutureProxy(Future):
         return getattr(self._future, attr)
 
     def add_done_callback(self, fn):
-        fn = self._executor._prepare_fn(fn)
+        fn = self._executor._prepare_fn(fn, force_copy=True)
         return self._future.add_done_callback(fn)
