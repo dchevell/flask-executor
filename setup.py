@@ -32,7 +32,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url='https://github.com/dchevell/flask-executor',
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(exclude=["tests"]),
     keywords=['flask', 'concurrent.futures'],
     classifiers=[
         "Programming Language :: Python :: 3",
