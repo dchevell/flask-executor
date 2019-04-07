@@ -64,6 +64,7 @@ class Executor(concurrent.futures._base.Executor):
     def __init__(self, app=None, name=''):
         self.app = app
         self._executor = None
+        self._default_done_callbacks = []
         self.futures = FutureCollection()
         if re.match(r'^(\w+)?$', name) is None:
             raise ValueError(
@@ -153,6 +154,8 @@ class Executor(concurrent.futures._base.Executor):
         """
         fn = self._prepare_fn(fn)
         future = self._executor.submit(fn, *args, **kwargs)
+        for callback in self._default_done_callbacks:
+            future.add_done_callback(callback)
         return FutureProxy(self, future)
 
     def submit_stored(self, future_key, fn, *args, **kwargs):
@@ -248,3 +251,15 @@ class Executor(concurrent.futures._base.Executor):
                 "don't support decorators".format(fn)
             )
         return ExecutorJob(executor=self, fn=fn)
+
+    def add_default_done_callback(self, fn):
+        """Registers callable to be attached to all newly created futures. When a
+        callable is submitted to the executor,
+        :meth:`concurrent.futures.Future.add_done_callback` is called for every default
+        callable that has been set."
+
+        :param fn: The callable to be added to the list of default done callbacks for new
+                   Futures.
+        """
+
+        self._default_done_callbacks.append(fn)

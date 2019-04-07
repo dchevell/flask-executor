@@ -229,3 +229,13 @@ def test_named_executor_name(default_app):
         assert True
     else:
         assert False
+
+def test_default_done_callback(app):
+    executor = Executor(app)
+    def callback(future):
+        setattr(future, 'test', 'test')
+    executor.add_default_done_callback(callback)
+    with app.test_request_context('/'):
+        future = executor.submit(fib, 5)
+        concurrent.futures.wait([future])
+        assert hasattr(future, 'test')
