@@ -148,6 +148,21 @@ Flask-Executor lets you decorate methods in the same style as distributed task q
    api/modules
 
 
+Default Callbacks
+-----------------
+
+:class:`concurrent.futures.Future` objects can have callbacks attached by using 
+:meth:`~concurrent.futures.Future.add_done_callback`. Flask-Executor lets you specify default
+callbacks that will be applied to all new futures created by the executor::
+
+    def some_callback(future):
+        # do something with future
+    
+    executor.add_default_done_callback(some_callback)
+
+    # Callback will be added to the below task automatically
+    executor.submit(pow, 323, 1235)
+
 
 Indices and tables
 ==================
