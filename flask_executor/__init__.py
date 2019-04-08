@@ -2,4 +2,4 @@ from flask_executor.executor import Executor
 
 
 __all__ = ('Executor',)
-__version__ = '0.8.3'
+__version__ = '0.9.0'
