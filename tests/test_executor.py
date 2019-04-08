@@ -27,6 +27,9 @@ def request_context_test_value(_=None):
 def g_context_test_value(_=None):
     return g.test_value
 
+def fail():
+    print(hello)
+
 
 def test_init(app):
     executor = Executor(app)
@@ -241,13 +244,11 @@ def test_default_done_callback(app):
         concurrent.futures.wait([future])
         assert hasattr(future, 'test')
 
-def test_propagate_exception_callback(default_app):
-    default_app.config['EXECUTOR_PROPAGATE_EXCEPTIONS'] = True
-    executor = Executor(default_app)
-    def fail():
-        print(hello)
+def test_propagate_exception_callback(app):
+    app.config['EXECUTOR_PROPAGATE_EXCEPTIONS'] = True
+    executor = Executor(app)
     with pytest.raises(NameError):
-        with default_app.test_request_context('/'):
+        with app.test_request_context('/'):
             future = executor.submit(fail)
             concurrent.futures.wait([future])
             assert propagate_exceptions_callback in future._done_callbacks
