@@ -104,13 +104,25 @@ Future objects can have callbacks attached by using `Future.add_done_callback`. 
 lets you specify default callbacks that will be applied to all new futures created by the executor:
 
 ```python
-    def some_callback(future):
-        # do something with future
-    
-    executor.add_default_done_callback(some_callback)
+def some_callback(future):
+    # do something with future
 
-    # Callback will be added to the below task automatically
-    executor.submit(pow, 323, 1235)
+executor.add_default_done_callback(some_callback)
+
+# Callback will be added to the below task automatically
+executor.submit(pow, 323, 1235)
+```
+
+
+Propagate Exceptions
+--------------------
+
+Normally any exceptions thrown by background threads or processes will be swallowed unless explicitly
+checked for. To instead surface all exceptions thrown by background tasks, Flask-Executor can add
+a special default callback that raises any exceptions thrown by tasks submitted to the executor::
+
+```python
+app.config['EXECUTOR_PROPAGATE_EXCEPTIONS'] = True 
 ```
 
 

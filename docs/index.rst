@@ -164,6 +164,16 @@ callbacks that will be applied to all new futures created by the executor::
     executor.submit(pow, 323, 1235)
 
 
+Propagate Exceptions
+--------------------
+
+Normally any exceptions thrown by background threads or processes will be swallowed unless explicitly
+checked for. To instead surface all exceptions thrown by background tasks, Flask-Executor can add
+a special default callback that raises any exceptions thrown by tasks submitted to the executor::
+
+    app.config['EXECUTOR_PROPAGATE_EXCEPTIONS'] = True    
+
+
 Indices and tables
 ==================
 
