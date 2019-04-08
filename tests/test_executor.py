@@ -6,7 +6,8 @@ from flask import Flask, current_app, g, request
 import pytest
 
 from flask_executor import Executor
-from flask_executor.executor import ExecutorJob, default_workers, WORKERS_MULTIPLIER
+from flask_executor.executor import default_workers, ExecutorJob, \
+    propagate_exceptions_callback, WORKERS_MULTIPLIER
 
 
 # Reusable functions for tests
@@ -239,3 +240,15 @@ def test_default_done_callback(app):
         future = executor.submit(fib, 5)
         concurrent.futures.wait([future])
         assert hasattr(future, 'test')
+
+def test_propagate_exception_callback(default_app):
+    default_app.config['EXECUTOR_PROPAGATE_EXCEPTIONS'] = True
+    executor = Executor(default_app)
+    def fail():
+        print(hello)
+    with pytest.raises(NameError):
+        with default_app.test_request_context('/'):
+            future = executor.submit(fail)
+            concurrent.futures.wait([future])
+            assert propagate_exceptions_callback in future._done_callbacks
+            propagate_exceptions_callback(future)

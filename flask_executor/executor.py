@@ -29,6 +29,12 @@ def copy_current_app_context(fn):
     return wrapper
 
 
+def propagate_exceptions_callback(future):
+    exc = future.exception()
+    if exc:
+        raise exc
+
+
 class ExecutorJob:
     """Wraps a function with an executor so to allow the wrapped function to
     submit itself directly to the executor."""
@@ -76,6 +82,7 @@ class Executor(concurrent.futures._base.Executor):
         self.EXECUTOR_TYPE = name + 'EXECUTOR_TYPE'
         self.EXECUTOR_MAX_WORKERS = name + 'EXECUTOR_MAX_WORKERS'
         self.EXECUTOR_FUTURES_MAX_LENGTH = name + 'EXECUTOR_FUTURES_MAX_LENGTH'
+        self.EXECUTOR_PROPAGATE_EXCEPTIONS = name + 'EXECUTOR_PROPAGATE_EXCEPTIONS'
         if app is not None:
             self.init_app(app)
 
@@ -94,10 +101,12 @@ class Executor(concurrent.futures._base.Executor):
         executor_type = app.config[self.EXECUTOR_TYPE]
         executor_max_workers = default_workers(executor_type)
         app.config.setdefault(self.EXECUTOR_MAX_WORKERS, executor_max_workers)
-        app.config.setdefault(self.EXECUTOR_FUTURES_MAX_LENGTH, None)
-        futures_max_length = app.config[self.EXECUTOR_FUTURES_MAX_LENGTH]
+        futures_max_length = app.config.setdefault(self.EXECUTOR_FUTURES_MAX_LENGTH, None)
+        propagate_exceptions = app.config.setdefault(self.EXECUTOR_PROPAGATE_EXCEPTIONS, False)
         if futures_max_length:
             self.futures.max_length = futures_max_length
+        if propagate_exceptions:
+            self.add_default_done_callback(propagate_exceptions_callback)
         self._executor = self._make_executor(app)
         app.extensions[self.name + 'executor'] = self
 
