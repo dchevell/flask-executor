@@ -253,3 +253,11 @@ def test_propagate_exception_callback(app):
             concurrent.futures.wait([future])
             assert propagate_exceptions_callback in future._done_callbacks
             propagate_exceptions_callback(future)
+
+def test_coerce_config_types(default_app):
+    default_app.config['EXECUTOR_MAX_WORKERS'] = '5'
+    default_app.config['EXECUTOR_FUTURES_MAX_LENGTH'] = '10'
+    default_app.config['EXECUTOR_PROPAGATE_EXCEPTIONS'] = 'true'
+    executor = Executor(default_app)
+    with default_app.test_request_context():
+        future = executor.submit_stored('fibonacci', fib, 35)

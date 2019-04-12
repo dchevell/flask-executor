@@ -35,6 +35,10 @@ def propagate_exceptions_callback(future):
         raise exc
 
 
+def str2bool(v):
+    return str(v).lower() in ("yes", "true", "t", "1")
+
+
 class ExecutorJob:
     """Wraps a function with an executor so to allow the wrapped function to
     submit itself directly to the executor."""
@@ -103,9 +107,9 @@ class Executor(concurrent.futures._base.Executor):
         app.config.setdefault(self.EXECUTOR_MAX_WORKERS, executor_max_workers)
         futures_max_length = app.config.setdefault(self.EXECUTOR_FUTURES_MAX_LENGTH, None)
         propagate_exceptions = app.config.setdefault(self.EXECUTOR_PROPAGATE_EXCEPTIONS, False)
-        if futures_max_length:
-            self.futures.max_length = futures_max_length
-        if propagate_exceptions:
+        if futures_max_length is not None:
+            self.futures.max_length = int(futures_max_length)
+        if str2bool(propagate_exceptions):
             self.add_default_done_callback(propagate_exceptions_callback)
         self._executor = self._make_executor(app)
         app.extensions[self.name + 'executor'] = self
@@ -113,6 +117,8 @@ class Executor(concurrent.futures._base.Executor):
     def _make_executor(self, app):
         executor_type = app.config[self.EXECUTOR_TYPE]
         executor_max_workers = app.config[self.EXECUTOR_MAX_WORKERS]
+        if executor_max_workers is not None:
+            executor_max_workers = int(executor_max_workers)
         if executor_type == 'thread':
             _executor = concurrent.futures.ThreadPoolExecutor
         elif executor_type == 'process':
