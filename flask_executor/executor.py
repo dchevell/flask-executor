@@ -35,6 +35,10 @@ def propagate_exceptions_callback(future):
         raise exc
 
 
+def str2bool(v):
+    return str(v).lower() in ("yes", "true", "t", "1")
+
+
 class ExecutorJob:
     """Wraps a function with an executor so to allow the wrapped function to
     submit itself directly to the executor."""
@@ -105,7 +109,7 @@ class Executor(concurrent.futures._base.Executor):
         propagate_exceptions = app.config.setdefault(self.EXECUTOR_PROPAGATE_EXCEPTIONS, False)
         if futures_max_length is not None:
             self.futures.max_length = int(futures_max_length)
-        if propagate_exceptions:
+        if str2bool(propagate_exceptions):
             self.add_default_done_callback(propagate_exceptions_callback)
         self._executor = self._make_executor(app)
         app.extensions[self.name + 'executor'] = self
