@@ -86,15 +86,15 @@ class FutureProxy(InstanceProxy, Future):
     return a subclassed Future object, this proxy class is used to override
     instance behaviours whilst providing an agnostic method of accessing
     the original methods and attributes.
-    :param executor: An instance of :class:`flask_executor.Executor` which
-                     will be used to provide access to Flask context features.
     :param future: An instance of :class:`~concurrent.futures.Future` that
                    the proxy will provide access to.
+    :param executor: An instance of :class:`flask_executor.Executor` which
+                     will be used to provide access to Flask context features.
     """
 
-    def __init__(self, executor, future):
-        self._executor = executor
+    def __init__(self, future, executor):
         self._self = future
+        self._executor = executor
 
     def add_done_callback(self, fn):
         fn = self._executor._prepare_fn(fn, force_copy=True)

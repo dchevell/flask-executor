@@ -162,7 +162,7 @@ class Executor(InstanceProxy, concurrent.futures._base.Executor):
         future = self._self.submit(fn, *args, **kwargs)
         for callback in self._default_done_callbacks:
             future.add_done_callback(callback)
-        return FutureProxy(self, future)
+        return FutureProxy(future, self)
 
     def submit_stored(self, future_key, fn, *args, **kwargs):
         """Submits the callable using :meth:`Executor.submit` and stores the

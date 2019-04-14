@@ -89,6 +89,7 @@ def test_max_workers(app):
     EXECUTOR_MAX_WORKERS = 10
     app.config['EXECUTOR_MAX_WORKERS'] = EXECUTOR_MAX_WORKERS
     executor = Executor(app)
+    assert executor._max_workers == EXECUTOR_MAX_WORKERS
     assert executor._self._max_workers == EXECUTOR_MAX_WORKERS
 
 def test_thread_decorator_submit(default_app):
@@ -218,7 +219,9 @@ def test_named_executor(default_app):
     assert 'executor' in default_app.extensions
     assert name + 'executor' in default_app.extensions
     assert executor._self._max_workers == EXECUTOR_MAX_WORKERS
+    assert executor._max_workers == EXECUTOR_MAX_WORKERS
     assert custom_executor._self._max_workers == CUSTOM_EXECUTOR_MAX_WORKERS
+    assert custom_executor._max_workers == CUSTOM_EXECUTOR_MAX_WORKERS
 
 def test_named_executor_submit(app):
     name = 'custom'
