@@ -5,6 +5,7 @@ import pytest
 
 from flask_executor import Executor
 from flask_executor.futures import FutureCollection, FutureProxy
+from flask_executor.helpers import InstanceProxy
 
 
 def fib(n):
@@ -85,3 +86,12 @@ def test_add_done_callback(default_app):
         future.add_done_callback(callback)
     concurrent.futures.wait([future])
     assert exception is None
+
+def test_instance_proxy():
+    class TestProxy(InstanceProxy):
+        pass
+    x = TestProxy(concurrent.futures.Future())
+    assert isinstance(x, concurrent.futures.Future)
+    assert 'TestProxy' in repr(x)
+    assert 'Future' in repr(x)
+

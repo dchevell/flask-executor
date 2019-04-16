@@ -1,6 +1,8 @@
 from collections import OrderedDict
 from concurrent.futures import Future
 
+from flask_executor.helpers import InstanceProxy
+
 
 class FutureCollection:
     """A FutureCollection is an object to store and interact with
@@ -78,26 +80,22 @@ class FutureCollection:
         return self._futures.pop(future_key, None)
 
 
-class FutureProxy(Future):
+class FutureProxy(InstanceProxy, Future):
     """A FutureProxy is an instance proxy that wraps an instance of
     :class:`concurrent.futures.Future`. Since an executor can't be made to
     return a subclassed Future object, this proxy class is used to override
     instance behaviours whilst providing an agnostic method of accessing
     the original methods and attributes.
-    :param executor: An instance of :class:`flask_executor.Executor` which
-                     will be used to provide access to Flask context features.
     :param future: An instance of :class:`~concurrent.futures.Future` that
                    the proxy will provide access to.
+    :param executor: An instance of :class:`flask_executor.Executor` which
+                     will be used to provide access to Flask context features.
     """
 
-    def __init__(self, executor, future):
+    def __init__(self, future, executor):
+        self._self = future
         self._executor = executor
-        self._future = future
-
-    def __getattr__(self, attr):
-        # Call any valid Future method or attribute
-        return getattr(self._future, attr)
 
     def add_done_callback(self, fn):
         fn = self._executor._prepare_fn(fn, force_copy=True)
-        return self._future.add_done_callback(fn)
+        return self._self.add_done_callback(fn)

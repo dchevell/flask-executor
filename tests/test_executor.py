@@ -35,28 +35,30 @@ def test_init(app):
     executor = Executor(app)
     assert 'executor' in app.extensions
     assert isinstance(executor, concurrent.futures._base.Executor)
-    assert isinstance(executor._executor, concurrent.futures._base.Executor)
-    assert executor.__getattr__('shutdown')
+    assert isinstance(executor._self, concurrent.futures._base.Executor)
+    assert getattr(executor, 'shutdown')
 
 def test_factory_init(app):
     executor = Executor()
     executor.init_app(app)
     assert 'executor' in app.extensions
-    assert isinstance(executor._executor, concurrent.futures._base.Executor)
+    assert isinstance(executor._self, concurrent.futures._base.Executor)
 
 def test_thread_executor_init(default_app):
     default_app.config['EXECUTOR_TYPE'] = 'thread'
     executor = Executor(default_app)
-    assert isinstance(executor._executor, concurrent.futures.ThreadPoolExecutor)
+    assert isinstance(executor._self, concurrent.futures.ThreadPoolExecutor)
+    assert isinstance(executor, concurrent.futures.ThreadPoolExecutor)
 
 def test_process_executor_init(default_app):
     default_app.config['EXECUTOR_TYPE'] = 'process'
     executor = Executor(default_app)
-    assert isinstance(executor._executor, concurrent.futures.ProcessPoolExecutor)
+    assert isinstance(executor._self, concurrent.futures.ProcessPoolExecutor)
+    assert isinstance(executor, concurrent.futures.ProcessPoolExecutor)
 
 def test_default_executor_init(default_app):
     executor = Executor(default_app)
-    assert isinstance(executor._executor, concurrent.futures.ThreadPoolExecutor)
+    assert isinstance(executor._self, concurrent.futures.ThreadPoolExecutor)
 
 def test_invalid_executor_init(default_app):
     default_app.config['EXECUTOR_TYPE'] = 'invalid_value'
@@ -87,7 +89,8 @@ def test_max_workers(app):
     EXECUTOR_MAX_WORKERS = 10
     app.config['EXECUTOR_MAX_WORKERS'] = EXECUTOR_MAX_WORKERS
     executor = Executor(app)
-    assert executor._executor._max_workers == EXECUTOR_MAX_WORKERS
+    assert executor._max_workers == EXECUTOR_MAX_WORKERS
+    assert executor._self._max_workers == EXECUTOR_MAX_WORKERS
 
 def test_thread_decorator_submit(default_app):
     default_app.config['EXECUTOR_TYPE'] = 'thread'
@@ -215,8 +218,10 @@ def test_named_executor(default_app):
     custom_executor = Executor(default_app, name=name)
     assert 'executor' in default_app.extensions
     assert name + 'executor' in default_app.extensions
-    assert executor._executor._max_workers == EXECUTOR_MAX_WORKERS
-    assert custom_executor._executor._max_workers == CUSTOM_EXECUTOR_MAX_WORKERS
+    assert executor._self._max_workers == EXECUTOR_MAX_WORKERS
+    assert executor._max_workers == EXECUTOR_MAX_WORKERS
+    assert custom_executor._self._max_workers == CUSTOM_EXECUTOR_MAX_WORKERS
+    assert custom_executor._max_workers == CUSTOM_EXECUTOR_MAX_WORKERS
 
 def test_named_executor_submit(app):
     name = 'custom'
@@ -261,3 +266,9 @@ def test_coerce_config_types(default_app):
     executor = Executor(default_app)
     with default_app.test_request_context():
         future = executor.submit_stored('fibonacci', fib, 35)
+
+def test_shutdown_executor(default_app):
+    executor = Executor(default_app)
+    assert executor._shutdown is False
+    executor.shutdown()
+    assert executor._shutdown is True

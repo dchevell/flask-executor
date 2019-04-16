@@ -8,7 +8,7 @@ from flask import copy_current_request_context
 from flask.globals import _app_ctx_stack
 
 from flask_executor.futures import FutureCollection, FutureProxy
-
+from flask_executor.helpers import InstanceProxy, str2bool
 
 WORKERS_MULTIPLIER = {'thread': 1, 'process': 5}
 
@@ -35,10 +35,6 @@ def propagate_exceptions_callback(future):
         raise exc
 
 
-def str2bool(v):
-    return str(v).lower() in ("yes", "true", "t", "1")
-
-
 class ExecutorJob:
     """Wraps a function with an executor so to allow the wrapped function to
     submit itself directly to the executor."""
@@ -60,7 +56,7 @@ class ExecutorJob:
         return results
 
 
-class Executor(concurrent.futures._base.Executor):
+class Executor(InstanceProxy, concurrent.futures._base.Executor):
     """An executor interface for :py:mod:`concurrent.futures` designed for
     working with Flask applications.
 
@@ -73,7 +69,6 @@ class Executor(concurrent.futures._base.Executor):
 
     def __init__(self, app=None, name=''):
         self.app = app
-        self._executor = None
         self._default_done_callbacks = []
         self.futures = FutureCollection()
         if re.match(r'^(\w+)?$', name) is None:
@@ -89,10 +84,6 @@ class Executor(concurrent.futures._base.Executor):
         self.EXECUTOR_PROPAGATE_EXCEPTIONS = name + 'EXECUTOR_PROPAGATE_EXCEPTIONS'
         if app is not None:
             self.init_app(app)
-
-    def __getattr__(self, attr):
-        # Call any valid Executor method or attribute
-        return getattr(self._executor, attr)
 
     def init_app(self, app):
         """Initialise application. This will also intialise the configured
@@ -111,7 +102,7 @@ class Executor(concurrent.futures._base.Executor):
             self.futures.max_length = int(futures_max_length)
         if str2bool(propagate_exceptions):
             self.add_default_done_callback(propagate_exceptions_callback)
-        self._executor = self._make_executor(app)
+        self._self = self._make_executor(app)
         app.extensions[self.name + 'executor'] = self
 
     def _make_executor(self, app):
@@ -128,7 +119,7 @@ class Executor(concurrent.futures._base.Executor):
         return _executor(max_workers=executor_max_workers)
 
     def _prepare_fn(self, fn, force_copy=False):
-        if isinstance(self._executor, concurrent.futures.ThreadPoolExecutor) \
+        if isinstance(self._self, concurrent.futures.ThreadPoolExecutor) \
             or force_copy:
             fn = copy_current_request_context(fn)
             fn = copy_current_app_context(fn)
@@ -168,10 +159,10 @@ class Executor(concurrent.futures._base.Executor):
         :rtype: flask_executor.FutureProxy
         """
         fn = self._prepare_fn(fn)
-        future = self._executor.submit(fn, *args, **kwargs)
+        future = self._self.submit(fn, *args, **kwargs)
         for callback in self._default_done_callbacks:
             future.add_done_callback(callback)
-        return FutureProxy(self, future)
+        return FutureProxy(future, self)
 
     def submit_stored(self, future_key, fn, *args, **kwargs):
         """Submits the callable using :meth:`Executor.submit` and stores the
@@ -242,7 +233,7 @@ class Executor(concurrent.futures._base.Executor):
                           method.
         """
         fn = self._prepare_fn(fn)
-        return self._executor.map(fn, *iterables, **kwargs)
+        return self._self.map(fn, *iterables, **kwargs)
 
     def job(self, fn):
         """Decorator. Use this to transform functions into `ExecutorJob`
@@ -260,7 +251,7 @@ class Executor(concurrent.futures._base.Executor):
             future = fib.submit(5)
             results = fib.map(range(1, 6))
         """
-        if isinstance(self._executor, concurrent.futures.ProcessPoolExecutor):
+        if isinstance(self._self, concurrent.futures.ProcessPoolExecutor):
             raise TypeError(
                 "Can't decorate {}: Executors that use multiprocessing "
                 "don't support decorators".format(fn)
