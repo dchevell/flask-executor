@@ -50,6 +50,8 @@ copy of both the current application context and current request context. Code t
 these contexts or that depends on information or configuration stored in `flask.current_app`,
 `flask.request` or `flask.g` can be submitted to the executor without modification.
 
+Note: due to limitations in Python's default object serialisation and a lack of shared memory space between subprocesses, contexts cannot be pushed to `ProcessPoolExecutor()` workers. 
+
 
 Futures
 -------
