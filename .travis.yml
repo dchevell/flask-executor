@@ -1,21 +1,17 @@
+dist: xenial
 language: python
-
 python:
   - 2.7
-  - 3.3
   - 3.4
   - 3.5
   - 3.6
-  - 3.7-dev
-
+  - 3.7
 install:
   - pip install -q "pytest>=3.6"
   - pip install -q pytest-flask
   - pip install -q pytest-cov coveralls
   - pip install -e .
-
 script:
   - py.test --cov=flask_executor/ tests/ .
-
 after_success:
   - coveralls
