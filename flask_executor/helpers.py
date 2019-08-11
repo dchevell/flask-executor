@@ -12,7 +12,10 @@ class InstanceProxy(object):
 
     @property
     def _self(self):
-        return object.__getattribute__(self, PROXIED_OBJECT)
+        try:
+            return object.__getattribute__(self, PROXIED_OBJECT)
+        except AttributeError:
+            return None
 
     @_self.setter
     def _self(self, proxied_obj):
