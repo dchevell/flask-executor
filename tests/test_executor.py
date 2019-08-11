@@ -1,6 +1,8 @@
 import concurrent.futures
+import logging
 from multiprocessing import cpu_count
 import random
+import time
 
 from flask import Flask, current_app, g, request
 import pytest
@@ -28,6 +30,7 @@ def g_context_test_value(_=None):
     return g.test_value
 
 def fail():
+    time.sleep(0.1)
     print(hello)
 
 
@@ -249,16 +252,17 @@ def test_default_done_callback(app):
         concurrent.futures.wait([future])
         assert hasattr(future, 'test')
 
-def test_propagate_exception_callback(app):
+def test_propagate_exception_callback(app, caplog):
+    caplog.set_level(logging.ERROR)
     app.config['EXECUTOR_PROPAGATE_EXCEPTIONS'] = True
     executor = Executor(app)
     with pytest.raises(NameError):
         with app.test_request_context('/'):
             future = executor.submit(fail)
-            concurrent.futures.wait([future])
             assert propagate_exceptions_callback in future._done_callbacks
+            concurrent.futures.wait([future])
             propagate_exceptions_callback(future)
-
+    
 def test_coerce_config_types(default_app):
     default_app.config['EXECUTOR_MAX_WORKERS'] = '5'
     default_app.config['EXECUTOR_FUTURES_MAX_LENGTH'] = '10'
@@ -272,3 +276,14 @@ def test_shutdown_executor(default_app):
     assert executor._shutdown is False
     executor.shutdown()
     assert executor._shutdown is True
+
+def test_pre_init_executor(default_app):
+    executor = Executor()
+    @executor.job
+    def decorated(n):
+        return fib(n)
+    assert executor
+    executor.init_app(default_app)
+    with default_app.test_request_context(''):
+        future = decorated.submit(5)
+    assert future.result() == fib(5)
