@@ -10,13 +10,6 @@ from flask.globals import _app_ctx_stack
 from flask_executor.futures import FutureCollection, FutureProxy
 from flask_executor.helpers import InstanceProxy, str2bool
 
-WORKERS_MULTIPLIER = {'thread': 1, 'process': 5}
-
-
-def default_workers(executor_type, major=version_info.major, minor=version_info.minor):
-    if not (major == 3 and minor in (3, 4)):
-        return None
-    return cpu_count() * WORKERS_MULTIPLIER.get(executor_type, 1)
 
 
 def copy_current_app_context(fn):
@@ -76,12 +69,11 @@ class Executor(InstanceProxy, concurrent.futures._base.Executor):
                 "Executor names may only contain letters, numbers or underscores"
             )
         self.name = name
-        if len(name) > 0:
-            name = name.upper() + '_'
-        self.EXECUTOR_TYPE = name + 'EXECUTOR_TYPE'
-        self.EXECUTOR_MAX_WORKERS = name + 'EXECUTOR_MAX_WORKERS'
-        self.EXECUTOR_FUTURES_MAX_LENGTH = name + 'EXECUTOR_FUTURES_MAX_LENGTH'
-        self.EXECUTOR_PROPAGATE_EXCEPTIONS = name + 'EXECUTOR_PROPAGATE_EXCEPTIONS'
+        prefix = name.upper() + '_' if name else ''
+        self.EXECUTOR_TYPE = prefix + 'EXECUTOR_TYPE'
+        self.EXECUTOR_MAX_WORKERS = prefix + 'EXECUTOR_MAX_WORKERS'
+        self.EXECUTOR_FUTURES_MAX_LENGTH = prefix + 'EXECUTOR_FUTURES_MAX_LENGTH'
+        self.EXECUTOR_PROPAGATE_EXCEPTIONS = prefix + 'EXECUTOR_PROPAGATE_EXCEPTIONS'
         if app is not None:
             self.init_app(app)
 
@@ -93,9 +85,6 @@ class Executor(InstanceProxy, concurrent.futures._base.Executor):
             * :class:`concurrent.futures.ProcessPoolExecutor`
         """
         app.config.setdefault(self.EXECUTOR_TYPE, 'thread')
-        executor_type = app.config[self.EXECUTOR_TYPE]
-        executor_max_workers = default_workers(executor_type)
-        app.config.setdefault(self.EXECUTOR_MAX_WORKERS, executor_max_workers)
         futures_max_length = app.config.setdefault(self.EXECUTOR_FUTURES_MAX_LENGTH, None)
         propagate_exceptions = app.config.setdefault(self.EXECUTOR_PROPAGATE_EXCEPTIONS, False)
         if futures_max_length is not None:
@@ -106,10 +95,10 @@ class Executor(InstanceProxy, concurrent.futures._base.Executor):
         app.extensions[self.name + 'executor'] = self
 
     def _make_executor(self, app):
-        executor_type = app.config[self.EXECUTOR_TYPE]
-        executor_max_workers = app.config[self.EXECUTOR_MAX_WORKERS]
+        executor_max_workers = app.config.setdefault(self.EXECUTOR_MAX_WORKERS, None)
         if executor_max_workers is not None:
             executor_max_workers = int(executor_max_workers)
+        executor_type = app.config[self.EXECUTOR_TYPE]
         if executor_type == 'thread':
             _executor = concurrent.futures.ThreadPoolExecutor
         elif executor_type == 'process':
