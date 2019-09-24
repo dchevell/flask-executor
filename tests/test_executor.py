@@ -1,23 +1,23 @@
+import concurrent
 import concurrent.futures
 import logging
-from multiprocessing import cpu_count
 import random
 import time
+from threading import local
 
-from flask import Flask, current_app, g, request
 import pytest
+from flask import current_app, g, request
 
 from flask_executor import Executor
-from flask_executor.executor import ExecutorJob, propagate_exceptions_callback
+from flask_executor.executor import propagate_exceptions_callback
 
 
 # Reusable functions for tests
-
 def fib(n):
     if n <= 2:
         return 1
     else:
-        return fib(n-1) + fib(n-2)
+        return fib(n - 1) + fib(n - 2)
 
 def app_context_test_value(_=None):
     return current_app.config['TEST_VALUE']
@@ -31,7 +31,6 @@ def g_context_test_value(_=None):
 def fail():
     time.sleep(0.1)
     print(hello)
-
 
 def test_init(app):
     executor = Executor(app)
@@ -140,10 +139,10 @@ def test_submit_app_context(app):
         future = executor.submit(app_context_test_value)
     assert future.result() == test_value
 
-def test_submit_g_context_process(app):
+def test_submit_g_context_process(default_app):
     test_value = random.randint(1, 101)
-    executor = Executor(app)
-    with app.test_request_context(''):
+    executor = Executor(default_app)
+    with default_app.test_request_context(''):
         g.test_value = test_value
         future = executor.submit(g_context_test_value)
     assert future.result() == test_value
@@ -166,11 +165,11 @@ def test_map_app_context(app):
     for r in results:
         assert r == test_value
 
-def test_map_g_context_process(app):
+def test_map_g_context_process(default_app):
     test_value = random.randint(1, 101)
     iterator = list(range(5))
-    executor = Executor(app)
-    with app.test_request_context(''):
+    executor = Executor(default_app)
+    with default_app.test_request_context(''):
         g.test_value = test_value
         results = executor.map(g_context_test_value, iterator)
     for r in results:
@@ -251,7 +250,7 @@ def test_propagate_exception_callback(app, caplog):
             assert propagate_exceptions_callback in future._done_callbacks
             concurrent.futures.wait([future])
             propagate_exceptions_callback(future)
-    
+
 def test_coerce_config_types(default_app):
     default_app.config['EXECUTOR_MAX_WORKERS'] = '5'
     default_app.config['EXECUTOR_FUTURES_MAX_LENGTH'] = '10'
@@ -276,3 +275,40 @@ def test_pre_init_executor(default_app):
     with default_app.test_request_context(''):
         future = decorated.submit(5)
     assert future.result() == fib(5)
+
+thread_local = local()
+
+def set_thread_local():
+    if hasattr(thread_local, 'value'):
+        raise ValueError('thread local already present')
+    thread_local.value = True
+
+def clear_thread_local(response_or_exc):
+    if hasattr(thread_local, 'value'):
+        del thread_local.value
+    return response_or_exc
+
+def test_teardown_appcontext_is_called(default_app):
+    default_app.config['EXECUTOR_MAX_WORKERS'] = 1
+    default_app.config['EXECUTOR_PUSH_APP_CONTEXT'] = True
+    default_app.teardown_appcontext(clear_thread_local)
+
+    executor = Executor(default_app)
+    with default_app.test_request_context():
+        futures = [executor.submit(set_thread_local) for _ in range(2)]
+        concurrent.futures.wait(futures)
+        [propagate_exceptions_callback(future) for future in futures]
+
+
+def test_teardown_appcontext_is_not_called(default_app):
+    default_app.config['EXECUTOR_MAX_WORKERS'] = 1
+    default_app.config['EXECUTOR_PUSH_APP_CONTEXT'] = False
+    default_app.teardown_appcontext(clear_thread_local)
+
+    executor = Executor(default_app)
+    with pytest.raises(ValueError):
+        with default_app.test_request_context():
+            for i in range(2):
+                future = executor.submit(set_thread_local)
+                concurrent.futures.wait([future])
+                propagate_exceptions_callback(future)
