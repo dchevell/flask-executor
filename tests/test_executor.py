@@ -13,11 +13,12 @@ from flask_executor.executor import propagate_exceptions_callback
 
 
 # Reusable functions for tests
+
 def fib(n):
     if n <= 2:
         return 1
     else:
-        return fib(n - 1) + fib(n - 2)
+        return fib(n-1) + fib(n-2)
 
 def app_context_test_value(_=None):
     return current_app.config['TEST_VALUE']
