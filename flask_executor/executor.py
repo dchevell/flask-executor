@@ -5,12 +5,20 @@ from sys import version_info
 
 
 from flask import copy_current_request_context
-from flask.globals import _app_ctx_stack
+from flask.globals import _app_ctx_stack, current_app
 
 from flask_executor.futures import FutureCollection, FutureProxy
 from flask_executor.helpers import InstanceProxy, str2bool
 
 
+def push_app_context(fn):
+    app = current_app._get_current_object()
+
+    def wrapper(*args, **kwargs):
+        with app.app_context():
+            return fn(*args, **kwargs)
+
+    return wrapper
 
 def copy_current_app_context(fn):
     app_context = _app_ctx_stack.top
@@ -74,6 +82,8 @@ class Executor(InstanceProxy, concurrent.futures._base.Executor):
         self.EXECUTOR_MAX_WORKERS = prefix + 'EXECUTOR_MAX_WORKERS'
         self.EXECUTOR_FUTURES_MAX_LENGTH = prefix + 'EXECUTOR_FUTURES_MAX_LENGTH'
         self.EXECUTOR_PROPAGATE_EXCEPTIONS = prefix + 'EXECUTOR_PROPAGATE_EXCEPTIONS'
+        self.EXECUTOR_PUSH_APP_CONTEXT = prefix + 'EXECUTOR_PUSH_APP_CONTEXT'
+
         if app is not None:
             self.init_app(app)
 
@@ -85,6 +95,7 @@ class Executor(InstanceProxy, concurrent.futures._base.Executor):
             * :class:`concurrent.futures.ProcessPoolExecutor`
         """
         app.config.setdefault(self.EXECUTOR_TYPE, 'thread')
+        app.config.setdefault(self.EXECUTOR_PUSH_APP_CONTEXT, False)
         futures_max_length = app.config.setdefault(self.EXECUTOR_FUTURES_MAX_LENGTH, None)
         propagate_exceptions = app.config.setdefault(self.EXECUTOR_PROPAGATE_EXCEPTIONS, False)
         if futures_max_length is not None:
@@ -111,7 +122,10 @@ class Executor(InstanceProxy, concurrent.futures._base.Executor):
         if isinstance(self._self, concurrent.futures.ThreadPoolExecutor) \
             or force_copy:
             fn = copy_current_request_context(fn)
-            fn = copy_current_app_context(fn)
+            if current_app.config[self.EXECUTOR_PUSH_APP_CONTEXT]:
+                fn = push_app_context(fn)
+            else:
+                fn = copy_current_app_context(fn)
         return fn
 
     def submit(self, fn, *args, **kwargs):
