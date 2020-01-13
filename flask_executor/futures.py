@@ -99,3 +99,9 @@ class FutureProxy(InstanceProxy, Future):
     def add_done_callback(self, fn):
         fn = self._executor._prepare_fn(fn, force_copy=True)
         return self._self.add_done_callback(fn)
+
+    def __eq__(self, obj):
+        return self._self == obj
+
+    def __hash__(self):
+        return self._self.__hash__()
