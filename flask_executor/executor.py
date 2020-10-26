@@ -1,15 +1,11 @@
 import concurrent.futures
-from multiprocessing import cpu_count
 import re
-from sys import version_info
-
 
 from flask import copy_current_request_context
 from flask.globals import _app_ctx_stack
 
 from flask_executor.futures import FutureCollection, FutureProxy
 from flask_executor.helpers import InstanceProxy, str2bool
-
 
 
 def copy_current_app_context(fn):
