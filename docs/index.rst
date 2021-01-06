@@ -125,7 +125,7 @@ app::
 Decoration
 ----------
 
-Flask-Executor lets you decorate methods in the same style as distributed task queues like
+Flask-Executor lets you decorate methods in the same style as distributed task queues when using 'thread' executor type like
 `Celery`_::
 
     @executor.job
