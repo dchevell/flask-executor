@@ -111,7 +111,7 @@ class Executor(InstanceProxy, concurrent.futures._base.Executor):
         return fn
 
     def submit(self, fn, *args, **kwargs):
-        """Schedules the callable, fn, to be executed as fn(\*args \**kwargs)
+        r"""Schedules the callable, fn, to be executed as fn(\*args \**kwargs)
         and returns a :class:`~flask_executor.futures.FutureProxy` object, a
         :class:`~concurrent.futures.Future` subclass representing
         the execution of the callable.
@@ -150,7 +150,7 @@ class Executor(InstanceProxy, concurrent.futures._base.Executor):
         return FutureProxy(future, self)
 
     def submit_stored(self, future_key, fn, *args, **kwargs):
-        """Submits the callable using :meth:`Executor.submit` and stores the
+        r"""Submits the callable using :meth:`Executor.submit` and stores the
         Future in the executor via a
         :class:`~flask_executor.futures.FutureCollection` object available at
         :data:`Executor.futures`. These futures can be retrieved anywhere
@@ -193,7 +193,7 @@ class Executor(InstanceProxy, concurrent.futures._base.Executor):
         return future
 
     def map(self, fn, *iterables, **kwargs):
-        """Submits the callable, fn, and an iterable of arguments to the
+        r"""Submits the callable, fn, and an iterable of arguments to the
         executor and returns the results inside a generator.
 
         See also :meth:`concurrent.futures.Executor.map`.
