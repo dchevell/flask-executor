@@ -35,4 +35,3 @@ class InstanceProxy(object):
         class_name =  object.__getattribute__(self, '__class__').__name__
         target_repr = repr(self._self)
         return '<%s( %s )>' % (class_name, target_repr)
-

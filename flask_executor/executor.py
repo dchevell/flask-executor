@@ -1,8 +1,5 @@
 import concurrent.futures
-from multiprocessing import cpu_count
 import re
-from sys import version_info
-
 
 from flask import copy_current_request_context
 from flask.globals import _app_ctx_stack, current_app
@@ -19,6 +16,7 @@ def push_app_context(fn):
             return fn(*args, **kwargs)
 
     return wrapper
+
 
 def copy_current_app_context(fn):
     app_context = _app_ctx_stack.top
@@ -129,7 +127,7 @@ class Executor(InstanceProxy, concurrent.futures._base.Executor):
         return fn
 
     def submit(self, fn, *args, **kwargs):
-        """Schedules the callable, fn, to be executed as fn(\*args \**kwargs)
+        r"""Schedules the callable, fn, to be executed as fn(\*args \**kwargs)
         and returns a :class:`~flask_executor.futures.FutureProxy` object, a
         :class:`~concurrent.futures.Future` subclass representing
         the execution of the callable.
@@ -168,7 +166,7 @@ class Executor(InstanceProxy, concurrent.futures._base.Executor):
         return FutureProxy(future, self)
 
     def submit_stored(self, future_key, fn, *args, **kwargs):
-        """Submits the callable using :meth:`Executor.submit` and stores the
+        r"""Submits the callable using :meth:`Executor.submit` and stores the
         Future in the executor via a
         :class:`~flask_executor.futures.FutureCollection` object available at
         :data:`Executor.futures`. These futures can be retrieved anywhere
@@ -211,7 +209,7 @@ class Executor(InstanceProxy, concurrent.futures._base.Executor):
         return future
 
     def map(self, fn, *iterables, **kwargs):
-        """Submits the callable, fn, and an iterable of arguments to the
+        r"""Submits the callable, fn, and an iterable of arguments to the
         executor and returns the results inside a generator.
 
         See also :meth:`concurrent.futures.Executor.map`.
