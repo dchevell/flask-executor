@@ -1,8 +1,10 @@
 import concurrent.futures
+import contextvars
+import copy
 import re
 
-from flask import copy_current_request_context
-from flask.globals import current_app
+from flask import copy_current_request_context, current_app, g
+from flask.globals import _cv_app
 
 from flask_executor.futures import FutureCollection, FutureProxy
 from flask_executor.helpers import InstanceProxy, str2bool
@@ -10,9 +12,12 @@ from flask_executor.helpers import InstanceProxy, str2bool
 
 def push_app_context(fn):
     app = current_app._get_current_object()
+    _g = copy.copy(g)
 
     def wrapper(*args, **kwargs):
         with app.app_context():
+            ctx = _cv_app.get(None)
+            ctx.g = _g
             return fn(*args, **kwargs)
 
     return wrapper
