@@ -4,10 +4,18 @@ import copy
 import re
 
 from flask import copy_current_request_context, current_app, g
-from flask.globals import _cv_app
 
 from flask_executor.futures import FutureCollection, FutureProxy
 from flask_executor.helpers import InstanceProxy, str2bool
+
+
+def get_current_app_context():
+    try:
+        from flask.globals import _cv_app
+        return _cv_app.get(None)
+    except ImportError:
+        from flask.globals import _app_ctx_stack
+        return _app_ctx_stack.top
 
 
 def push_app_context(fn):
@@ -16,7 +24,7 @@ def push_app_context(fn):
 
     def wrapper(*args, **kwargs):
         with app.app_context():
-            ctx = _cv_app.get(None)
+            ctx = get_current_app_context()
             ctx.g = _g
             return fn(*args, **kwargs)
 
