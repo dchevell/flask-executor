@@ -285,7 +285,6 @@ def test_propagate_exception_callback(app, caplog):
     with pytest.raises(NameError):
         with app.test_request_context('/'):
             future = executor.submit(fail)
-            assert propagate_exceptions_callback in future._done_callbacks
             concurrent.futures.wait([future])
             future.result()
 

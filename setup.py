@@ -43,7 +43,7 @@ setuptools.setup(
     install_requires=['Flask'],
     extras_require={
         ':python_version == "2.7"': ['futures>=3.1.1'],
-        'test': ['pytest', 'pytest-cov', 'coveralls', 'flask-sqlalchemy'],
+        'test': ['pytest', 'flask-sqlalchemy'],
     },
     test_suite='tests',
     cmdclass={

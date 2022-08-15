@@ -1,7 +1,7 @@
 Flask-Executor
 ==============
 
-[![Build Status](https://travis-ci.org/dchevell/flask-executor.svg?branch=master)](https://travis-ci.org/dchevell/flask-executor)
+[![Build Status](https://github.com/dchevell/flask-executor/actions/workflows/tests.yml/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/dchevell/flask-executor/badge.svg)](https://coveralls.io/github/dchevell/flask-executor)
 [![PyPI Version](https://img.shields.io/pypi/v/Flask-Executor.svg)](https://pypi.python.org/pypi/Flask-Executor)
 [![GitHub license](https://img.shields.io/github/license/dchevell/flask-executor.svg)](https://github.com/dchevell/flask-executor/blob/master/LICENSE)
@@ -50,7 +50,7 @@ copy of both the current application context and current request context. Code t
 these contexts or that depends on information or configuration stored in `flask.current_app`,
 `flask.request` or `flask.g` can be submitted to the executor without modification.
 
-Note: due to limitations in Python's default object serialisation and a lack of shared memory space between subprocesses, contexts cannot be pushed to `ProcessPoolExecutor()` workers. 
+Note: due to limitations in Python's default object serialisation and a lack of shared memory space between subprocesses, contexts cannot be pushed to `ProcessPoolExecutor()` workers.
 
 
 Futures
@@ -124,7 +124,7 @@ checked for. To instead surface all exceptions thrown by background tasks, Flask
 a special default callback that raises any exceptions thrown by tasks submitted to the executor::
 
 ```python
-app.config['EXECUTOR_PROPAGATE_EXCEPTIONS'] = True 
+app.config['EXECUTOR_PROPAGATE_EXCEPTIONS'] = True
 ```
 
 
