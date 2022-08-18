@@ -11,7 +11,7 @@ except ImportError:
         version = pattern.search(f.read()).group(1)
 
 
-with open("README.md", "r") as fh:
+with open('README.md', 'r') as fh:
     long_description = fh.read()
 
 
@@ -30,9 +30,9 @@ setuptools.setup(
     author_email='chevell@gmail.com',
     description='An easy to use Flask wrapper for concurrent.futures',
     long_description=long_description,
-    long_description_content_type="text/markdown",
+    long_description_content_type='text/markdown',
     url='https://github.com/dchevell/flask-executor',
-    packages=setuptools.find_packages(exclude=["tests"]),
+    packages=setuptools.find_packages(exclude=['tests']),
     keywords=['flask', 'concurrent.futures'],
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -42,9 +42,9 @@ setuptools.setup(
     license='MIT',
     install_requires=['Flask'],
     extras_require={
-        ':python_version == "2.7"': ['futures>=3.1.1']
+        ':python_version == "2.7"': ['futures>=3.1.1'],
+        'test': ['pytest', 'flask-sqlalchemy'],
     },
-    tests_require=['pytest', 'pytest-flask', 'python-coveralls'],
     test_suite='tests',
     cmdclass={
         'test': pytest

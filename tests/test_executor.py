@@ -155,11 +155,11 @@ def test_process_decorator(default_app):
         assert 0
 
 
-def test_submit_app_context(app):
+def test_submit_app_context(default_app):
     test_value = random.randint(1, 101)
-    app.config['TEST_VALUE'] = test_value
-    executor = Executor(app)
-    with app.test_request_context(''):
+    default_app.config['TEST_VALUE'] = test_value
+    executor = Executor(default_app)
+    with default_app.test_request_context(''):
         future = executor.submit(app_context_test_value)
     assert future.result() == test_value
 
@@ -173,21 +173,21 @@ def test_submit_g_context_process(default_app):
     assert future.result() == test_value
 
 
-def test_submit_request_context(app):
+def test_submit_request_context(default_app):
     test_value = random.randint(1, 101)
-    executor = Executor(app)
-    with app.test_request_context(''):
+    executor = Executor(default_app)
+    with default_app.test_request_context(''):
         request.test_value = test_value
         future = executor.submit(request_context_test_value)
     assert future.result() == test_value
 
 
-def test_map_app_context(app):
+def test_map_app_context(default_app):
     test_value = random.randint(1, 101)
     iterator = list(range(5))
-    app.config['TEST_VALUE'] = test_value
-    executor = Executor(app)
-    with app.test_request_context(''):
+    default_app.config['TEST_VALUE'] = test_value
+    executor = Executor(default_app)
+    with default_app.test_request_context(''):
         results = executor.map(app_context_test_value, iterator)
     for r in results:
         assert r == test_value
@@ -204,11 +204,11 @@ def test_map_g_context_process(default_app):
         assert r == test_value
 
 
-def test_map_request_context(app):
+def test_map_request_context(default_app):
     test_value = random.randint(1, 101)
     iterator = list(range(5))
-    executor = Executor(app)
-    with app.test_request_context('/'):
+    executor = Executor(default_app)
+    with default_app.test_request_context('/'):
         request.test_value = test_value
         results = executor.map(request_context_test_value, iterator)
     for r in results:
@@ -285,7 +285,6 @@ def test_propagate_exception_callback(app, caplog):
     with pytest.raises(NameError):
         with app.test_request_context('/'):
             future = executor.submit(fail)
-            assert propagate_exceptions_callback in future._done_callbacks
             concurrent.futures.wait([future])
             future.result()
 
@@ -345,20 +344,6 @@ def test_teardown_appcontext_is_called(default_app):
         futures = [executor.submit(set_thread_local) for _ in range(2)]
         concurrent.futures.wait(futures)
         [propagate_exceptions_callback(future) for future in futures]
-
-
-def test_teardown_appcontext_is_not_called(default_app):
-    default_app.config['EXECUTOR_MAX_WORKERS'] = 1
-    default_app.config['EXECUTOR_PUSH_APP_CONTEXT'] = False
-    default_app.teardown_appcontext(clear_thread_local)
-
-    executor = Executor(default_app)
-    with pytest.raises(ValueError):
-        with default_app.test_request_context():
-            for i in range(2):
-                future = executor.submit(set_thread_local)
-                concurrent.futures.wait([future])
-                propagate_exceptions_callback(future)
 
 
 try:
