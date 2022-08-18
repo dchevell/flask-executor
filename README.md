@@ -1,7 +1,7 @@
 Flask-Executor
 ==============
 
-[![Build Status](https://github.com/dchevell/flask-executor/actions/workflows/tests.yml/badge.svg)
+[![Build Status](https://github.com/dchevell/flask-executor/actions/workflows/tests.yml/badge.svg)](https://github.com/dchevell/flask-executor/actions/workflows/tests.yml)
 [![Coverage Status](https://coveralls.io/repos/github/dchevell/flask-executor/badge.svg)](https://coveralls.io/github/dchevell/flask-executor)
 [![PyPI Version](https://img.shields.io/pypi/v/Flask-Executor.svg)](https://pypi.python.org/pypi/Flask-Executor)
 [![GitHub license](https://img.shields.io/github/license/dchevell/flask-executor.svg)](https://github.com/dchevell/flask-executor/blob/master/LICENSE)
