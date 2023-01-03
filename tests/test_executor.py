@@ -3,6 +3,7 @@ import concurrent.futures
 import logging
 import random
 import time
+from concurrent.futures import _base
 from threading import local
 
 import pytest
@@ -38,6 +39,15 @@ def fail():
     print(hello)
 
 
+class CustomThreadPoolExecutor(concurrent.futures.ThreadPoolExecutor):
+    class _Future(_base.Future):
+        def __getattr__(self, item):
+            return lambda: True
+
+    def submit(self, fn, *args, **kwargs):
+        return self._Future()
+
+
 def test_init(app):
     executor = Executor(app)
     assert 'executor' in app.extensions
@@ -65,6 +75,20 @@ def test_process_executor_init(default_app):
     executor = Executor(default_app)
     assert isinstance(executor._self, concurrent.futures.ProcessPoolExecutor)
     assert isinstance(executor, concurrent.futures.ProcessPoolExecutor)
+
+
+def test_custom_executor_init(default_app):
+    default_app.config['EXECUTOR_TYPE'] = 'custom'
+    default_app.config['EXECUTOR_POOL_CLASS'] = CustomThreadPoolExecutor
+    executor = Executor(default_app)
+    assert isinstance(executor._self, CustomThreadPoolExecutor)
+    assert isinstance(executor, CustomThreadPoolExecutor)
+
+
+def test_invalid_process_custom_init(default_app):
+    default_app.config['EXECUTOR_TYPE'] = 'custom'
+    with pytest.raises(ValueError):
+        _ = Executor(default_app)
 
 
 def test_default_executor_init(default_app):
@@ -317,6 +341,15 @@ def test_pre_init_executor(default_app):
     with default_app.test_request_context(''):
         future = decorated.submit(5)
     assert future.result() == fib(5)
+
+
+def test_custom_executor_getarrt(default_app):
+    default_app.config['EXECUTOR_TYPE'] = 'custom'
+    default_app.config['EXECUTOR_POOL_CLASS'] = CustomThreadPoolExecutor
+    executor = Executor(default_app)
+    with default_app.test_request_context(''):
+        executor.submit_stored('fibonacci', fib, 35)
+    assert executor.futures.custom_func('fibonacci')
 
 
 thread_local = local()
