@@ -84,6 +84,7 @@ class Executor(InstanceProxy, concurrent.futures._base.Executor):
         self.EXECUTOR_FUTURES_MAX_LENGTH = prefix + 'EXECUTOR_FUTURES_MAX_LENGTH'
         self.EXECUTOR_PROPAGATE_EXCEPTIONS = prefix + 'EXECUTOR_PROPAGATE_EXCEPTIONS'
         self.EXECUTOR_PUSH_APP_CONTEXT = prefix + 'EXECUTOR_PUSH_APP_CONTEXT'
+        self.EXECUTOR_POOL_CLASS = prefix + 'EXECUTOR_POOL_CLASS'
 
         if app is not None:
             self.init_app(app)
@@ -115,6 +116,10 @@ class Executor(InstanceProxy, concurrent.futures._base.Executor):
             _executor = concurrent.futures.ThreadPoolExecutor
         elif executor_type == 'process':
             _executor = concurrent.futures.ProcessPoolExecutor
+        elif executor_type == 'custom':
+            _executor = app.config.setdefault(self.EXECUTOR_POOL_CLASS, None)
+            if not _executor:
+                raise ValueError("Missing Executor pool class")
         else:
             raise ValueError("{} is not a valid executor type.".format(executor_type))
         return _executor(max_workers=executor_max_workers)
