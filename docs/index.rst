@@ -45,6 +45,13 @@ Valid values are ``'thread'`` (default) to initialise a
 
     app.config['EXECUTOR_TYPE'] = 'thread'
 
+If you want to provide your own PoolExecutor class, set ``EXECUTOR_TYPE`` to ``'custom'`` and set ``EXECUTOR_POOL_CLASS`` in your app configuration::
+
+    app.config['EXECUTOR_TYPE'] = 'custom'
+    app.config['EXECUTOR_POOL_CLASS'] = UserPoolExecutor
+
+Note: the user-provided PoolExecutor must implement all the relevant methods from :class:`~concurrent.futures.Executor`
+
 To define the number of worker threads for a :class:`~concurrent.futures.ThreadPoolExecutor` or the
 number of worker processes for a :class:`~concurrent.futures.ProcessPoolExecutor`, set
 ``EXECUTOR_MAX_WORKERS`` in your app configuration. Valid values are any integer or ``None`` (default)
