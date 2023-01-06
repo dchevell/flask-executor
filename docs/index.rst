@@ -61,7 +61,7 @@ to let :py:mod:`concurrent.futures` pick defaults for you::
 
 If multiple executors are needed, :class:`flask_executor.Executor` can be initialised with a ``name``
 parameter. Named executors will look for configuration variables prefixed with the specified ``name``
-value, uppercased:
+value, uppercased::
 
     app.config['CUSTOM_EXECUTOR_TYPE'] = 'thread'
     app.config['CUSTOM_EXECUTOR_MAX_WORKERS'] = 5
