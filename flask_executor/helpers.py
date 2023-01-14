@@ -29,7 +29,10 @@ class InstanceProxy(object):
         if attr in cls_dict or attr in inst_dict or attr in super_cls_dict:
             return object.__getattribute__(self, attr)
         target_obj = object.__getattribute__(self, PROXIED_OBJECT)
-        return object.__getattribute__(target_obj, attr)
+        try:
+            return object.__getattribute__(target_obj, attr)
+        except AttributeError:
+            return getattr(target_obj, attr)
 
     def __repr__(self):
         class_name =  object.__getattribute__(self, '__class__').__name__

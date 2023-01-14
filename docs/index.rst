@@ -45,6 +45,13 @@ Valid values are ``'thread'`` (default) to initialise a
 
     app.config['EXECUTOR_TYPE'] = 'thread'
 
+If you want to provide your own PoolExecutor class, set ``EXECUTOR_TYPE`` to ``'custom'`` and set ``EXECUTOR_POOL_CLASS`` in your app configuration::
+
+    app.config['EXECUTOR_TYPE'] = 'custom'
+    app.config['EXECUTOR_POOL_CLASS'] = UserPoolExecutor
+
+Note: the user-provided PoolExecutor must implement all the relevant methods from :class:`~concurrent.futures.Executor`
+
 To define the number of worker threads for a :class:`~concurrent.futures.ThreadPoolExecutor` or the
 number of worker processes for a :class:`~concurrent.futures.ProcessPoolExecutor`, set
 ``EXECUTOR_MAX_WORKERS`` in your app configuration. Valid values are any integer or ``None`` (default)
@@ -54,12 +61,31 @@ to let :py:mod:`concurrent.futures` pick defaults for you::
 
 If multiple executors are needed, :class:`flask_executor.Executor` can be initialised with a ``name``
 parameter. Named executors will look for configuration variables prefixed with the specified ``name``
-value, uppercased:
+value, uppercased::
 
     app.config['CUSTOM_EXECUTOR_TYPE'] = 'thread'
     app.config['CUSTOM_EXECUTOR_MAX_WORKERS'] = 5
     executor = Executor(app, name='custom')
 
+gevent
+^^^^^^
+When using `gevent <http://www.gevent.org/>`_ the original :class:`~concurrent.futures.ThreadPoolExecutor` is being patched to behave cooperatively inside the event loop.
+
+In some cases you want to run your workloads inside a `thread` instead of inside a `greenlet`, in such cases you want to configure your app using `gevent.threadpool.ThreadPoolExecutor <https://www.gevent.org/api/gevent.threadpool.html#gevent.threadpool.ThreadPoolExecutor>`_::
+
+    app.config['EXECUTOR_TYPE'] = 'custom'
+    app.config['EXECUTOR_POOL_CLASS'] = gevent.threadpool.ThreadPoolExecutor
+
+Note: be aware that some modules do not behave correctly when they are patched and used in a submitted job when using `gevent.threadpool.ThreadPoolExecutor <https://www.gevent.org/api/gevent.threadpool.html#gevent.threadpool.ThreadPoolExecutor>`_, for example the following code will NOT work::
+
+    executor.submit(
+        subprocess.check_output,
+        ['uname', '-p'],
+        stderr=subprocess.DEVNULL,
+        text=True,
+    )
+
+    TypeError: child watchers are only available on the default loop
 
 Basic Usage
 -----------
